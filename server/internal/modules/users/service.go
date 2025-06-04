@@ -38,6 +38,7 @@ func (us *userService) GetByID(ctx context.Context, ID string) (*User, error) {
 
 // Register implements UsersService.
 func (us *userService) Register(ctx context.Context, input common.RegisterUserRequest) (*User, error) {
+	// TODO: adicionar verificação de subcategoryID para validar se realmente existe
 	existingUser, err := us.repository.GetByEmail(ctx, input.Email)
 	if err != nil {
 		return nil, exceptions.MakeApiError(err)
@@ -83,9 +84,12 @@ func (us *userService) Register(ctx context.Context, input common.RegisterUserRe
 }
 
 func (us *userService) UploadUserPicture(ctx context.Context, userID string, fileHeader *multipart.FileHeader) (string, error) {
-	bucketName := "user-avatar"
-	objectName := fmt.Sprintf("%s-%s", bucketName, userID)
-	avatarURL, err := us.storageClient.UploadFile(bucketName, objectName, fileHeader)
+	if fileHeader == nil {
+		return "", fmt.Errorf("file header is nil")
+	}
+
+	objectName := fmt.Sprintf("%s-%s", "avatar", userID)
+	avatarURL, err := us.storageClient.UploadFile(objectName, fileHeader)
 	if err != nil {
 		return "", err
 	}

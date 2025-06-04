@@ -55,10 +55,10 @@ func NewFromModel(m models.User) *User {
 		passwordHash:  m.PasswordHash,
 		avatarURL:     m.AvatarURL,
 		role:          m.Role,
-		subcategoryID: &m.SubcategoryID,
+		subcategoryID: m.SubcategoryID,
 		createdAt:     m.CreatedAt,
-		updatedAt:     &m.UpdatedAt,
-		deletedAt:     &m.DeletedAt,
+		updatedAt:     m.UpdatedAt,
+		deletedAt:     m.DeletedAt,
 	}
 }
 
@@ -70,10 +70,10 @@ func (u *User) ToModel() models.User {
 		PasswordHash:  u.passwordHash,
 		AvatarURL:     u.avatarURL,
 		Role:          u.role,
-		SubcategoryID: *u.subcategoryID,
+		SubcategoryID: u.subcategoryID,
 		CreatedAt:     u.createdAt,
-		UpdatedAt:     *u.updatedAt,
-		DeletedAt:     *u.deletedAt,
+		UpdatedAt:     u.updatedAt,
+		DeletedAt:     u.deletedAt,
 	}
 }
 

@@ -24,9 +24,10 @@ type Config struct {
 	DBPort     string `mapstructure:"DB_PORT"`
 	DBDatabase string `mapstructure:"DB_DATABASE"`
 
-	StorageURL       string `mapstructure:"storage_url"`
-	StorageAccessKey string `mapstructure:"storage_access_key"`
-	StorageSecretKey string `map:"storage_secret_key"`
+	StorageURL        string `mapstructure:"STORAGE_URL"`
+	StorageAccessKey  string `mapstructure:"STORAGE_ACCESS_KEY"`
+	StorageSecretKey  string `mapstructure:"STORAGE_SECRET_KEY"`
+	StorageBucketName string `mapstructure:"STORAGE_BUCKET_NAME"`
 
 	ResendKey string `mapstructure:"RESEND_API_KEY"`
 

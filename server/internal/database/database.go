@@ -15,12 +15,17 @@ type Database struct {
 
 func New(username, password, host, port, database string) *Database {
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", username, password, host, port, database)
-	fmt.Println(dsn)
 	db, err := sqlx.Connect("postgres", dsn)
 	if err != nil {
 		log.Fatal(err)
 		return &Database{}
 	}
+
+	if err := db.Ping(); err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("database is running")
 
 	return &Database{db: db}
 }

@@ -11,10 +11,11 @@ import (
 )
 
 type StorageClient struct {
-	client *minio.Client
+	client     *minio.Client
+	bucketName string
 }
 
-func NewStorageClient(endpoint, accessKey, secretKey string) *StorageClient {
+func NewStorageClient(endpoint, accessKey, secretKey, bucketName string) *StorageClient {
 	storageClient, err := minio.New(endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
 		Secure: false,
@@ -23,36 +24,27 @@ func NewStorageClient(endpoint, accessKey, secretKey string) *StorageClient {
 		log.Fatalln("failed to create minio client: ", err)
 	}
 
-	return &StorageClient{client: storageClient}
+	log.Println("storage connected")
+
+	return &StorageClient{client: storageClient, bucketName: bucketName}
 }
 
-func (c *StorageClient) UploadFile(bucketName, objectName string, fileHeader *multipart.FileHeader) (string, error) {
+func (c *StorageClient) UploadFile(objectName string, fileHeader *multipart.FileHeader) (string, error) {
 	ctx := context.Background()
-	exists, err := c.client.BucketExists(ctx, bucketName)
-	if err != nil {
-		return "", fmt.Errorf("error checking bucket %s existence: %w", bucketName, err)
-	}
-	if !exists {
-		err = c.client.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{})
-		if err != nil {
-			return "", fmt.Errorf("failed to create bucket %s: %w", bucketName, err)
-		}
-	}
-
 	file, err := fileHeader.Open()
 	if err != nil {
 		return "", fmt.Errorf("failed to open uploaded file: %w", err)
 	}
 	defer file.Close()
 
-	_, err = c.client.PutObject(ctx, bucketName, objectName, file, fileHeader.Size, minio.PutObjectOptions{
+	_, err = c.client.PutObject(ctx, c.bucketName, fmt.Sprintf("%s/%s", "avatars", objectName), file, fileHeader.Size, minio.PutObjectOptions{
 		ContentType: fileHeader.Header.Get("Content-Type"),
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to upload object %w", err)
 	}
 
-	avatarURL := fmt.Sprintf("%s/%s/%s", c.client.EndpointURL(), bucketName, objectName)
+	avatarURL := fmt.Sprintf("%s/%s/%s", c.client.EndpointURL(), c.bucketName, objectName)
 
 	return avatarURL, nil
 }
