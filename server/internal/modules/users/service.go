@@ -37,20 +37,20 @@ func (us *userService) GetByID(ctx context.Context, ID string) (*User, error) {
 }
 
 // Register implements UsersService.
-func (us *userService) Register(ctx context.Context, input common.RegisterUserRequest) (*User, error) {
+func (us *userService) Register(ctx context.Context, input common.RegisterUserRequest) error {
 	// TODO: adicionar verificação de subcategoryID para validar se realmente existe
 	existingUser, err := us.repository.GetByEmail(ctx, input.Email)
 	if err != nil {
-		return nil, exceptions.MakeApiError(err)
+		return exceptions.MakeApiError(err)
 	}
 
 	if existingUser != nil {
-		return nil, exceptions.MakeApiErrorWithStatus(http.StatusConflict, exceptions.ErrEmailTaken)
+		return exceptions.MakeApiErrorWithStatus(http.StatusConflict, exceptions.ErrEmailTaken)
 	}
 
 	passwordHash, err := valueobjects.NewPassword(input.Password)
 	if err != nil {
-		return nil, exceptions.MakeGenericApiError()
+		return exceptions.MakeGenericApiError()
 	}
 
 	user, err := New(
@@ -61,12 +61,12 @@ func (us *userService) Register(ctx context.Context, input common.RegisterUserRe
 		input.SubcategoryID,
 	)
 	if err != nil {
-		return nil, exceptions.MakeApiErrorWithStatus(http.StatusUnprocessableEntity, err)
+		return exceptions.MakeApiErrorWithStatus(http.StatusUnprocessableEntity, err)
 	}
 
 	avatarUrl, err := us.UploadUserPicture(ctx, user.ID(), input.Avatar)
 	if err != nil {
-		return nil, exceptions.MakeGenericApiError()
+		return exceptions.MakeGenericApiError()
 	}
 
 	user.avatarURL = avatarUrl
@@ -74,13 +74,13 @@ func (us *userService) Register(ctx context.Context, input common.RegisterUserRe
 	if err := us.repository.Register(ctx, user); err != nil {
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
-			return nil, exceptions.MakeApiErrorWithStatus(http.StatusConflict, fmt.Errorf("%s already taken", pqErr.Detail))
+			return exceptions.MakeApiErrorWithStatus(http.StatusConflict, fmt.Errorf("%s already taken", pqErr.Detail))
 		}
 
-		return nil, exceptions.MakeGenericApiError()
+		return exceptions.MakeGenericApiError()
 	}
 
-	return user, nil
+	return nil
 }
 
 func (us *userService) UploadUserPicture(ctx context.Context, userID string, fileHeader *multipart.FileHeader) (string, error) {

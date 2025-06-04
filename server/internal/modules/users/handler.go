@@ -79,7 +79,7 @@ func (h userHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := h.usersService.Register(ctx, formData)
+	err = h.usersService.Register(ctx, formData)
 	if err != nil {
 		var apiErr *exceptions.ApiError[string]
 		if castedErr, ok := err.(*exceptions.ApiError[string]); ok {
@@ -91,23 +91,5 @@ func (h userHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	commonUser := &common.User{
-		ID:            res.ID(),
-		Name:          res.Name(),
-		Email:         res.Email(),
-		Role:          res.Role(),
-		AvatarURL:     res.AvatarURL(),
-		SubcategoryID: nil,
-	}
-
-	if res.SubcategoryID() != "" {
-		subID := res.SubcategoryID()
-		commonUser.SubcategoryID = &subID
-	}
-
-	userResponse := &common.UserResponse{
-		User: commonUser,
-	}
-
-	httphelpers.WriteJSON(w, http.StatusCreated, userResponse)
+	httphelpers.WriteJSON(w, http.StatusCreated, common.RegisterUserResponse{Message: "success"})
 }

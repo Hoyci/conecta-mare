@@ -17,7 +17,7 @@ type (
 		DeleteByID(ctx context.Context, ID string) error
 	}
 	UsersService interface {
-		Register(ctx context.Context, input common.RegisterUserRequest) (*User, error)
+		Register(ctx context.Context, input common.RegisterUserRequest) error
 		GetByID(ctx context.Context, ID string) (*User, error)
 		GetByEmail(ctx context.Context, email string) (*User, error)
 		// Updated(ctx context.Context common.)
