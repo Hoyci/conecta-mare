@@ -30,7 +30,7 @@ func NewHandler(usersService UsersService) *userHandler {
 
 func (h userHandler) RegisterRoutes(r *chi.Mux) {
 	r.Route(
-		"/users", func(r chi.Router) {
+		"/api/v1/users", func(r chi.Router) {
 			// Public
 			r.Post("/register", h.handleRegister)
 		},
@@ -45,37 +45,69 @@ func (h userHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, 6<<20)
 
 	if err := r.ParseMultipartForm(5 << 20); err != nil {
-		exceptions.MakeGenericApiError()
+		apiErr := exceptions.MakeGenericApiError()
+		httphelpers.WriteJSON(w, apiErr.Code, apiErr)
 		return
 	}
 
 	var formData common.RegisterUserRequest
 	if err := formDecoder.Decode(&formData, r.PostForm); err != nil {
-		exceptions.MakeValidationError(err)
+		apiErr := exceptions.MakeValidationError(err)
+		httphelpers.WriteJSON(w, apiErr.Code, apiErr)
 		return
 	}
 
 	file, header, err := r.FormFile("avatar")
 	if err != nil {
-		exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, exceptions.ErrAvatarEmpty)
+		apiErr := exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, exceptions.ErrAvatarEmpty)
+		httphelpers.WriteJSON(w, apiErr.Code, apiErr)
 		return
 	}
 	defer file.Close()
 
+	formData.Avatar = header
+
 	if header.Size > 5<<20 {
-		exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, exceptions.ErrAvatarTooLarge)
+		apiErr := exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, exceptions.ErrAvatarTooLarge)
+		httphelpers.WriteJSON(w, apiErr.Code, apiErr)
 		return
 	}
 
 	if formData.Password != formData.ConfirmPassword {
-		exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, exceptions.ErrPasswordMatch)
+		apiErr := exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, exceptions.ErrPasswordMatch)
+		httphelpers.WriteJSON(w, apiErr.Code, apiErr)
+		return
 	}
 
 	res, err := h.usersService.Register(ctx, formData)
 	if err != nil {
-		exceptions.MakeApiError(err)
+		var apiErr *exceptions.ApiError[string]
+		if castedErr, ok := err.(*exceptions.ApiError[string]); ok {
+			apiErr = castedErr
+		} else {
+			apiErr = exceptions.MakeApiError(err)
+		}
+		httphelpers.WriteJSON(w, apiErr.Code, apiErr)
 		return
 	}
 
-	httphelpers.WriteJSON(w, http.StatusOK, res)
+	commonUser := &common.User{
+		ID:            res.ID(),
+		Name:          res.Name(),
+		Email:         res.Email(),
+		Role:          res.Role(),
+		AvatarURL:     res.AvatarURL(),
+		SubcategoryID: nil,
+	}
+
+	if res.SubcategoryID() != "" {
+		subID := res.SubcategoryID()
+		commonUser.SubcategoryID = &subID
+	}
+
+	userResponse := &common.UserResponse{
+		User: commonUser,
+	}
+
+	httphelpers.WriteJSON(w, http.StatusCreated, userResponse)
 }

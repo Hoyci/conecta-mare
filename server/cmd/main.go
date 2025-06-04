@@ -49,7 +49,12 @@ func main() {
 	db := database.New(cfg.DBUsername, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBDatabase)
 	defer db.Close()
 
-	storageClient := storage.NewStorageClient(cfg.StorageURL, cfg.StorageAccessKey, cfg.StorageSecretKey)
+	storageClient := storage.NewStorageClient(
+		cfg.StorageURL,
+		cfg.StorageAccessKey,
+		cfg.StorageSecretKey,
+		cfg.StorageBucketName,
+	)
 
 	usersRepo := users.NewRepo(db.DB())
 
