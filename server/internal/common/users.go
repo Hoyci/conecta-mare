@@ -25,6 +25,10 @@ type (
 		SubcategoryID   *string               `form:"subcategory_id,omitempty"`
 	}
 
+	RegisterUserResponse struct {
+		Message string `json:"message"`
+	}
+
 	LoginUserRequest struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
