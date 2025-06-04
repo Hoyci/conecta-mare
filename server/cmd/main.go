@@ -1,6 +1,11 @@
 package main
 
 import (
+	"conecta-mare-server/internal/config"
+	"conecta-mare-server/internal/database"
+	"conecta-mare-server/internal/modules/users"
+	"conecta-mare-server/internal/server"
+	"conecta-mare-server/pkg/storage"
 	"context"
 	"fmt"
 	"log"
@@ -8,8 +13,6 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-
-	"conecta-mare-server/internal/server"
 )
 
 func gracefulShutdown(apiServer *http.Server, done chan bool) {
@@ -38,8 +41,22 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 }
 
 func main() {
+	cfg := config.GetConfig()
 
-	server := server.NewServer()
+	router := server.NewRouter()
+	server := server.NewServer(cfg.Port, router)
+
+	db := database.New(cfg.DBUsername, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBDatabase)
+	defer db.Close()
+
+	storageClient := storage.NewStorageClient(cfg.StorageURL, cfg.StorageAccessKey, cfg.StorageSecretKey)
+
+	usersRepo := users.NewRepo(db.DB())
+
+	usersService := users.NewService(usersRepo, storageClient)
+
+	usersHandler := users.NewHandler(usersService)
+	usersHandler.RegisterRoutes(router)
 
 	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)

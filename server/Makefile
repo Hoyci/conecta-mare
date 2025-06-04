@@ -61,4 +61,20 @@ watch:
             fi; \
         fi
 
-.PHONY: all build run test clean watch docker-run docker-down itest
+# Add a new migration
+migrate:
+	@echo "====> Adding a new migration"
+	@if [ -z "$(name)" ]; then echo "Migration name is required"; exit 1; fi
+	@migrate create -ext sql -dir internal/database/migrate/migrations $(name)
+
+# Apply all pending migrations
+migrate-up: 
+	@echo "====> Applying all pending migrations"
+	@go run internal/database/migrate/migrate.go up
+
+# Revert all applied migrations
+migrate-down: 
+	@echo "====> Reverting all migrations"
+	@go run internal/database/migrate/migrate.go down
+
+.PHONY: all build run test clean watch docker-run docker-down itest migrate-up migrate-down
