@@ -3,6 +3,7 @@ package database
 import (
 	"fmt"
 	"log"
+	"log/slog"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
@@ -24,8 +25,6 @@ func New(username, password, host, port, database string) *Database {
 	if err := db.Ping(); err != nil {
 		log.Fatal(err)
 	}
-
-	log.Printf("database is running")
 
 	return &Database{db: db}
 }
@@ -87,7 +86,7 @@ func New(username, password, host, port, database string) *Database {
 // // If the connection is successfully closed, it returns nil.
 // // If an error occurs while closing the connection, it returns the error.
 func (d *Database) Close() error {
-	log.Printf("Disconnected from database")
+	slog.Info("Disconnected from database")
 	return d.db.Close()
 }
 

@@ -24,8 +24,6 @@ func NewStorageClient(endpoint, accessKey, secretKey, bucketName string) *Storag
 		log.Fatalln("failed to create minio client: ", err)
 	}
 
-	log.Println("storage connected")
-
 	return &StorageClient{client: storageClient, bucketName: bucketName}
 }
 
