@@ -5,6 +5,7 @@ import (
 	"conecta-mare-server/internal/database/models"
 	"conecta-mare-server/pkg/storage"
 	"context"
+	"log/slog"
 )
 
 type (
@@ -26,6 +27,7 @@ type (
 	userService struct {
 		repository    UsersRepository
 		storageClient *storage.StorageClient
+		logger        *slog.Logger
 	}
 	userHandler struct {
 		usersService UsersService

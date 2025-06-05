@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
@@ -16,8 +15,6 @@ type Server struct {
 }
 
 func NewServer(port int, handler http.Handler) *http.Server {
-	log.Printf("server is running on port %d", port)
-
 	return &http.Server{
 		Addr:         fmt.Sprintf(":%d", port),
 		Handler:      handler,
