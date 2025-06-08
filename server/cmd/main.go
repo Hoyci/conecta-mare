@@ -3,6 +3,7 @@ package main
 import (
 	"conecta-mare-server/internal/config"
 	"conecta-mare-server/internal/database"
+	"conecta-mare-server/internal/modules/session"
 	"conecta-mare-server/internal/modules/users"
 	"conecta-mare-server/internal/server"
 	"conecta-mare-server/pkg/storage"
@@ -84,9 +85,12 @@ func main() {
 		cfg.StorageBucketName,
 	)
 
+	sessionsRepo := session.NewRepo(db.DB())
 	usersRepo := users.NewRepo(db.DB())
 
-	usersService := users.NewService(usersRepo, storageClient, logger)
+	sessionsService := session.NewService(sessionsRepo, logger)
+
+	usersService := users.NewService(usersRepo, sessionsService, storageClient, logger)
 
 	usersHandler := users.NewHandler(usersService)
 	usersHandler.RegisterRoutes(router)

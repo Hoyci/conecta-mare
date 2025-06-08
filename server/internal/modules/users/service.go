@@ -2,7 +2,9 @@ package users
 
 import (
 	"conecta-mare-server/internal/common"
+	"conecta-mare-server/internal/modules/session"
 	"conecta-mare-server/pkg/exceptions"
+	"conecta-mare-server/pkg/security"
 	"conecta-mare-server/pkg/storage"
 	"conecta-mare-server/pkg/valueobjects"
 	"context"
@@ -15,52 +17,54 @@ import (
 	"github.com/lib/pq"
 )
 
-func NewService(repository UsersRepository, storageClient *storage.StorageClient, logger *slog.Logger) UsersService {
+func NewService(
+	repository UsersRepository,
+	sessionsService session.SessionsService,
+	storageClient *storage.StorageClient,
+	logger *slog.Logger,
+) UsersService {
 	return &userService{
-		repository:    repository,
-		storageClient: storageClient,
-		logger:        logger,
+		repository:     repository,
+		sessionService: sessionsService,
+		storageClient:  storageClient,
+		logger:         logger,
 	}
 }
 
-// DeleteByID implements UsersService.
-func (us *userService) DeleteByID(ctx context.Context, ID string) error {
+func (s *userService) DeleteByID(ctx context.Context, ID string) error {
 	panic("unimplemented")
 }
 
-// GetByEmail implements UsersService.
-func (us *userService) GetByEmail(ctx context.Context, email string) (*User, error) {
+func (s *userService) GetByEmail(ctx context.Context, email string) (*User, error) {
 	panic("unimplemented")
 }
 
-// GetByID implements UsersService.
-func (us *userService) GetByID(ctx context.Context, ID string) (*User, error) {
+func (s *userService) GetByID(ctx context.Context, ID string) (*User, error) {
 	panic("unimplemented")
 }
 
-// Register implements UsersService.
-func (us *userService) Register(ctx context.Context, input common.RegisterUserRequest) error {
-	// TODO: adicionar verificação de subcategoryID para validar se realmente existingUser
-	us.logger.InfoContext(ctx, "atempting to create user", "email", input.Email)
+func (s *userService) Register(ctx context.Context, input common.RegisterUserRequest) error {
+	// TODO: adicionar verificação de subcategoryID para validar se realmente existingser
+	s.logger.InfoContext(ctx, "atempting to create user", "email", input.Email)
 
-	existingUser, err := us.repository.GetByEmail(ctx, input.Email)
+	existingser, err := s.repository.GetByEmail(ctx, input.Email)
 	if err != nil {
-		us.logger.ErrorContext(ctx, "error while attempting check for existing user", "err", err, "email", input.Email)
+		s.logger.ErrorContext(ctx, "error while attempting check for existing user", "err", err, "email", input.Email)
 		return exceptions.MakeApiError(err)
 	}
 
-	if existingUser != nil {
-		us.logger.InfoContext(ctx, "email is taken", "email", input.Email)
+	if existingser != nil {
+		s.logger.InfoContext(ctx, "email is taken", "email", input.Email)
 		return exceptions.MakeApiErrorWithStatus(http.StatusConflict, exceptions.ErrEmailTaken)
 	}
 
 	passwordHash, err := valueobjects.NewPassword(input.Password)
 	if err != nil {
-		us.logger.ErrorContext(ctx, "error while attempting to hash user password", "err", err, "email", input.Email)
+		s.logger.ErrorContext(ctx, "error while attempting to hash user password", "err", err, "email", input.Email)
 		return exceptions.MakeGenericApiError()
 	}
 
-	us.logger.InfoContext(ctx, "password successfully hashed, creating user", "email", input.Email)
+	s.logger.InfoContext(ctx, "password successfully hashed, creating user", "email", input.Email)
 	user, err := New(
 		input.Name,
 		input.Email,
@@ -69,21 +73,21 @@ func (us *userService) Register(ctx context.Context, input common.RegisterUserRe
 		input.SubcategoryID,
 	)
 	if err != nil {
-		us.logger.ErrorContext(ctx, "error while attempting to process user entity", "err", err, "email", input.Email)
+		s.logger.ErrorContext(ctx, "error while attempting to process user entity", "err", err, "email", input.Email)
 		return exceptions.MakeApiErrorWithStatus(http.StatusUnprocessableEntity, err)
 	}
 
-	avatarUrl, err := us.UploadUserPicture(ctx, user.ID(), input.Avatar)
+	avatarUrl, err := s.UploadUserPicture(ctx, user.ID(), input.Avatar)
 	if err != nil {
-		us.logger.ErrorContext(ctx, "error while attempting to upload user avatar", "err", err, "email", input.Email)
+		s.logger.ErrorContext(ctx, "error while attempting to upload user avatar", "err", err, "email", input.Email)
 		return exceptions.MakeGenericApiError()
 	}
 
 	user.avatarURL = avatarUrl
-	us.logger.InfoContext(ctx, "user avatar successfully created", "email", input.Email)
+	s.logger.InfoContext(ctx, "user avatar successfully created", "email", input.Email)
 
-	if err := us.repository.Register(ctx, user); err != nil {
-		us.logger.ErrorContext(ctx, "error while attempting create user", "err", err, "user", user)
+	if err := s.repository.Register(ctx, user); err != nil {
+		s.logger.ErrorContext(ctx, "error while attempting create user", "err", err, "user", user)
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
 			return exceptions.MakeApiErrorWithStatus(http.StatusConflict, fmt.Errorf("%s already taken", pqErr.Detail))
@@ -92,17 +96,44 @@ func (us *userService) Register(ctx context.Context, input common.RegisterUserRe
 		return exceptions.MakeGenericApiError()
 	}
 
-	us.logger.InfoContext(ctx, "user successfully created", "user_id", user.ID())
+	s.logger.InfoContext(ctx, "user successfully created", "user_id", user.ID())
 	return nil
 }
 
-func (us *userService) UploadUserPicture(ctx context.Context, userID string, fileHeader *multipart.FileHeader) (string, error) {
+func (s *userService) Login(ctx context.Context, input common.LoginUserRequest) (*common.LoginUserResponse, error) {
+	s.logger.InfoContext(ctx, "attempting to login user, checking for existing user", "email", input.Email)
+
+	existingUser, err := s.repository.GetByEmail(ctx, input.Email)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "error while attempting to query for existing users", "err", err)
+		return nil, exceptions.MakeGenericApiError()
+	}
+	if existingUser == nil {
+		s.logger.InfoContext(ctx, "user was not found", "email", input.Email)
+		return nil, exceptions.MakeApiErrorWithStatus(http.StatusNotFound, exceptions.ErrUserNotFound)
+	}
+
+	if existingUser.DeletedAt != nil {
+		s.logger.InfoContext(ctx, "user must be active to login", "email", input.Email)
+		return nil, exceptions.MakeApiErrorWithStatus(http.StatusUnauthorized, exceptions.ErrUserDisabled)
+	}
+
+	s.logger.InfoContext(ctx, "user found, attempting to verify password", "email", existingUser.Email)
+	if !security.PasswordMatches(input.Password, existingUser.PasswordHash) {
+		s.logger.ErrorContext(ctx, "unauthorized attempt to login", "email", input.Email)
+		return nil, exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, exceptions.ErrInvalidLoginAttempt)
+	}
+
+	return nil, nil
+}
+
+func (s *userService) UploadUserPicture(ctx context.Context, userID string, fileHeader *multipart.FileHeader) (string, error) {
 	if fileHeader == nil {
 		return "", fmt.Errorf("file header is nil")
 	}
 
 	objectName := fmt.Sprintf("%s-%s", "avatar", userID)
-	avatarURL, err := us.storageClient.UploadFile(objectName, fileHeader)
+	avatarURL, err := s.storageClient.UploadFile(objectName, fileHeader)
 	if err != nil {
 		return "", err
 	}

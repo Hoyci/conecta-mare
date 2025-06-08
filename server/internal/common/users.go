@@ -34,6 +34,11 @@ type (
 		Password string `json:"password"`
 	}
 
+	LoginUserResponse struct {
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+	}
+
 	UserResponse struct {
 		User *User `json:"user"`
 	}
