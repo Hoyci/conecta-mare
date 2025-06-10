@@ -4,6 +4,7 @@ import (
 	"conecta-mare-server/internal/common"
 	"conecta-mare-server/internal/database/models"
 	"conecta-mare-server/internal/modules/session"
+	"conecta-mare-server/pkg/jwt"
 	"conecta-mare-server/pkg/storage"
 	"context"
 	"log/slog"
@@ -29,6 +30,7 @@ type (
 	userService struct {
 		repository     UsersRepository
 		sessionService session.SessionsService
+		tokenProvider  jwt.JWTProvider
 		storageClient  *storage.StorageClient
 		logger         *slog.Logger
 	}

@@ -31,10 +31,8 @@ type Config struct {
 
 	ResendKey string `mapstructure:"RESEND_API_KEY"`
 
-	JWTAccessKey            string `mapstructure:"JWT_ACCESS_KEY"`
-	JWTRefreshKey           string `mapstructure:"JWT_REFRESH_KEY"`
-	JWTAccessTokenDuration  string `mapstructure:"JWT_ACCESS_TOKEN_DURATION"`
-	JWTRefreshTokenDuration string `mapstructure:"JWT_REFRESH_TOKEN_DURATION"`
+	JWTAccessKey  string `mapstructure:"JWT_ACCESS_KEY"`
+	JWTRefreshKey string `mapstructure:"JWT_REFRESH_KEY"`
 }
 
 func GetConfig() *Config {

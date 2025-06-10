@@ -4,6 +4,7 @@ import (
 	"conecta-mare-server/internal/common"
 	"conecta-mare-server/internal/modules/session"
 	"conecta-mare-server/pkg/exceptions"
+	"conecta-mare-server/pkg/jwt"
 	"conecta-mare-server/pkg/security"
 	"conecta-mare-server/pkg/storage"
 	"conecta-mare-server/pkg/valueobjects"
@@ -21,6 +22,7 @@ func NewService(
 	repository UsersRepository,
 	sessionsService session.SessionsService,
 	storageClient *storage.StorageClient,
+	tokenProvider jwt.JWTProvider,
 	logger *slog.Logger,
 ) UsersService {
 	return &userService{
@@ -118,13 +120,46 @@ func (s *userService) Login(ctx context.Context, input common.LoginUserRequest) 
 		return nil, exceptions.MakeApiErrorWithStatus(http.StatusUnauthorized, exceptions.ErrUserDisabled)
 	}
 
-	s.logger.InfoContext(ctx, "user found, attempting to verify password", "email", existingUser.Email)
-	if !security.PasswordMatches(input.Password, existingUser.PasswordHash) {
+	user := NewFromModel(*existingUser)
+
+	s.logger.InfoContext(ctx, "user found, attempting to verify password", "email", user.Email())
+	if !security.PasswordMatches(input.Password, user.PasswordHash()) {
 		s.logger.ErrorContext(ctx, "unauthorized attempt to login", "email", input.Email)
 		return nil, exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, exceptions.ErrInvalidLoginAttempt)
 	}
 
-	return nil, nil
+	err = s.sessionService.DeactivateAllSessions(ctx, user.ID())
+	if err != nil {
+		s.logger.ErrorContext(ctx, "error while attempting to deactivate all user sessions", "user_id", existingUser.ID, "err", err)
+		return nil, exceptions.MakeGenericApiError()
+	}
+
+	accessToken, _, err := s.tokenProvider.GenerateAccessToken(user)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "error while attempting to create user access token", "user", user, "err", err)
+		return nil, exceptions.MakeGenericApiError()
+	}
+
+	refreshToken, claims, err := s.tokenProvider.GenerateAccessToken(user)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "error while attempting to create user refresh token", "user", user, "err", err)
+		return nil, exceptions.MakeGenericApiError()
+	}
+
+	_, err = s.sessionService.CreateSession(
+		ctx, common.CreateSessionRequest{UserID: user.ID(), JTI: claims.ID},
+	)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "error while attempting to create session", "err", err)
+		return nil, exceptions.MakeGenericApiError()
+	}
+
+	s.logger.InfoContext(ctx, "access token, refresh token and session created", "user_id", user.ID())
+
+	return &common.LoginUserResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nil
 }
 
 func (s *userService) UploadUserPicture(ctx context.Context, userID string, fileHeader *multipart.FileHeader) (string, error) {

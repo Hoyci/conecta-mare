@@ -4,6 +4,7 @@ import (
 	"conecta-mare-server/internal/common"
 	"conecta-mare-server/pkg/exceptions"
 	"conecta-mare-server/pkg/httphelpers"
+	"conecta-mare-server/pkg/jwt"
 	"net/http"
 	"sync"
 
@@ -33,6 +34,7 @@ func (h userHandler) RegisterRoutes(r *chi.Mux) {
 		"/api/v1/users", func(r chi.Router) {
 			// Public
 			r.Post("/register", h.handleRegister)
+			r.Post("/login", h.handleLogin)
 		},
 	)
 }
@@ -92,4 +94,35 @@ func (h userHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httphelpers.WriteJSON(w, http.StatusCreated, common.RegisterUserResponse{Message: "success"})
+}
+
+func (h userHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var body common.LoginUserRequest
+	err := httphelpers.ReadRequestBody(w, r, &body)
+	if err != nil {
+		apiErr := exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, err)
+		httphelpers.WriteJSON(w, apiErr.Code, apiErr)
+		return
+	}
+
+	response, err := h.usersService.Login(ctx, common.LoginUserRequest{Email: body.Email, Password: body.Password})
+	if err != nil {
+		apiErr := exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, err)
+		httphelpers.WriteJSON(w, apiErr.Code, apiErr)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    *response.RefreshToken,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
+		Path:     "/",
+		MaxAge:   int(jwt.RefreshTokenDuration.Seconds()),
+	})
+
+	httphelpers.WriteJSON(w, http.StatusOK, response)
 }
