@@ -197,6 +197,39 @@ func (s *userService) Logout(ctx context.Context) *exceptions.ApiError[string] {
 	return nil
 }
 
+func (s *userService) GetSigned(ctx context.Context) (*User, *exceptions.ApiError[string]) {
+	s.logger.InfoContext(ctx, "attempting to logout user")
+
+	c, ok := ctx.Value(middlewares.AuthKey{}).(*jwt.Claims)
+	if !ok {
+		s.logger.ErrorContext(ctx, "error while attempting to get auth values from context")
+		return nil, exceptions.MakeApiErrorWithStatus(http.StatusUnauthorized, exceptions.ErrUnauthorized)
+	}
+
+	user, err := s.repository.GetByID(ctx, c.UserID)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "error while attempting to get user by id", "user_id", c.UserID, "err", err)
+		return nil, exceptions.MakeGenericApiError()
+	}
+
+	if user == nil {
+		s.logger.WarnContext(ctx, "user not found", "user_id", c.UserID)
+		return nil, exceptions.MakeApiErrorWithStatus(http.StatusNotFound, exceptions.ErrUserNotFound)
+	}
+
+	userSession, err := s.sessionService.GetActiveSessionByUserID(ctx, c.UserID)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "error whilhe attempting to get user session", "user_id", user.ID, "err", err)
+		return nil, exceptions.MakeGenericApiError()
+	}
+	if userSession == nil {
+		s.logger.WarnContext(ctx, "session not found", "user_id", user.ID)
+		return nil, exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, exceptions.ErrActiveSessionNotFound)
+	}
+
+	return NewFromModel(*user), nil
+}
+
 func (s *userService) UploadUserPicture(ctx context.Context, userID string, fileHeader *multipart.FileHeader) (string, error) {
 	if fileHeader == nil {
 		return "", fmt.Errorf("file header is nil")
