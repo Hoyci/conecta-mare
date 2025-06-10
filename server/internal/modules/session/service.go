@@ -61,7 +61,7 @@ func (s service) GetActiveSessionByUserID(ctx context.Context, userID string) (*
 }
 
 func (s service) UpdateSession(ctx context.Context, session *Session) (*Session, error) {
-	s.logger.InfoContext(ctx, "attempting to update session", "user_id", session.userID)
+	s.logger.InfoContext(ctx, "attempting to update session", "user_id", session.userID, "session", session.id)
 	err := s.sessionRepo.Update(ctx, session)
 	if err != nil {
 		s.logger.ErrorContext(ctx, "error while to update session", "user_id", session.userID, "err", err)

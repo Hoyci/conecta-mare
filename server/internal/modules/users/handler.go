@@ -2,6 +2,7 @@ package users
 
 import (
 	"conecta-mare-server/internal/common"
+	"conecta-mare-server/internal/server/middlewares"
 	"conecta-mare-server/pkg/exceptions"
 	"conecta-mare-server/pkg/httphelpers"
 	"conecta-mare-server/pkg/jwt"
@@ -17,11 +18,12 @@ var (
 	Once     sync.Once
 )
 
-func NewHandler(usersService UsersService) *userHandler {
+func NewHandler(usersService UsersService, accessKey string) *userHandler {
 	Once.Do(
 		func() {
 			instance = &userHandler{
 				usersService: usersService,
+				accessKey:    accessKey,
 			}
 		},
 	)
@@ -30,11 +32,15 @@ func NewHandler(usersService UsersService) *userHandler {
 }
 
 func (h userHandler) RegisterRoutes(r *chi.Mux) {
+	m := middlewares.NewWithAuth(h.accessKey)
 	r.Route(
 		"/api/v1/users", func(r chi.Router) {
 			// Public
 			r.Post("/register", h.handleRegister)
 			r.Post("/login", h.handleLogin)
+
+			// Private
+			r.With(m.WithAuth).Patch("/logout", h.handleLogout)
 		},
 	)
 }
@@ -93,7 +99,7 @@ func (h userHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httphelpers.WriteJSON(w, http.StatusCreated, common.RegisterUserResponse{Message: "success"})
+	httphelpers.WriteSuccess(w, http.StatusCreated)
 }
 
 func (h userHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
@@ -107,11 +113,9 @@ func (h userHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := h.usersService.Login(ctx, common.LoginUserRequest{Email: body.Email, Password: body.Password})
-	if err != nil {
-		apiErr := exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, err)
-		httphelpers.WriteJSON(w, apiErr.Code, apiErr)
-		return
+	response, loginErr := h.usersService.Login(ctx, common.LoginUserRequest{Email: body.Email, Password: body.Password})
+	if loginErr != nil {
+		httphelpers.WriteJSON(w, loginErr.Code, loginErr.Err)
 	}
 
 	http.SetCookie(w, &http.Cookie{
@@ -125,4 +129,25 @@ func (h userHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	})
 
 	httphelpers.WriteJSON(w, http.StatusOK, response)
+}
+
+func (h userHandler) handleLogout(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	err := h.usersService.Logout(ctx)
+	if err != nil {
+		httphelpers.WriteJSON(w, err.Code, err.Err)
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
+	})
+
+	httphelpers.WriteSuccess(w, http.StatusOK)
 }
