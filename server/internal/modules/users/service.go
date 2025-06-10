@@ -48,12 +48,12 @@ func (s *userService) GetByID(ctx context.Context, ID string) (*User, error) {
 
 func (s *userService) Register(ctx context.Context, input common.RegisterUserRequest) error {
 	// TODO: adicionar verificação de subcategoryID para validar se realmente existingser
-	s.logger.InfoContext(ctx, "atempting to create user", "email", input.Email)
+	s.logger.InfoContext(ctx, "attempting to create user", "email", input.Email)
 
 	existingser, err := s.repository.GetByEmail(ctx, input.Email)
 	if err != nil {
 		s.logger.ErrorContext(ctx, "error while attempting check for existing user", "err", err, "email", input.Email)
-		return exceptions.MakeApiError(err)
+		return exceptions.MakeGenericApiError()
 	}
 
 	if existingser != nil {
@@ -242,4 +242,16 @@ func (s *userService) UploadUserPicture(ctx context.Context, userID string, file
 	}
 
 	return avatarURL, nil
+}
+
+func (s *userService) CountUsersBySubcategoryIDs(ctx context.Context, subcategoryIDs []string) (map[string]int, error) {
+	s.logger.InfoContext(ctx, "attempting to count user by subcategory IDs")
+
+	count, err := s.repository.CountBySubcategoryIDs(ctx, subcategoryIDs)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "error while attempting to count user by subcategory IDs", "err", err)
+		return nil, err
+	}
+
+	return count, nil
 }

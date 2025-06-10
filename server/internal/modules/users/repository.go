@@ -109,3 +109,36 @@ func (ur *usersRepository) Register(ctx context.Context, user *User) error {
 	_, err := ur.db.NamedExecContext(ctx, query, modelUser)
 	return err
 }
+
+func (r *usersRepository) CountBySubcategoryIDs(ctx context.Context, subcategoryIDs []string) (map[string]int, error) {
+	if len(subcategoryIDs) == 0 {
+		return make(map[string]int), nil
+	}
+
+	query, args, err := sqlx.In(`
+        SELECT subcategory_id, COUNT(*)
+        FROM users
+        WHERE subcategory_id IN (?) AND deleted_at IS NULL
+        GROUP BY subcategory_id`, subcategoryIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	query = r.db.Rebind(query)
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	counts := make(map[string]int)
+	for rows.Next() {
+		var subcategoryID string
+		var count int
+		if err := rows.Scan(&subcategoryID, &count); err != nil {
+			return nil, err
+		}
+		counts[subcategoryID] = count
+	}
+	return counts, nil
+}
