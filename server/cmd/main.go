@@ -90,7 +90,7 @@ func main() {
 
 	usersService := users.NewService(usersRepo, sessionsService, storageClient, *tokenProvider, logger)
 
-	usersHandler := users.NewHandler(usersService)
+	usersHandler := users.NewHandler(usersService, cfg.JWTAccessKey)
 	usersHandler.RegisterRoutes(router)
 
 	done := make(chan bool, 1)

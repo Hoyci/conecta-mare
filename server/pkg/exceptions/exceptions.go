@@ -35,6 +35,9 @@ var (
 	ErrNilInput                  = errors.New("cannot pass nil value")
 	ErrAvatarEmpty               = errors.New("avatar cannot be empty")
 	ErrAvatarTooLarge            = errors.New("avatar needs to be max 5mb")
+	ErrActiveSessionNotFound     = errors.New("active session not found")
+	ErrAccesTokenNotFound        = errors.New("access token not found")
+	ErrTokenExpired              = errors.New("token expired")
 )
 
 func IsValidSqlErr(err error) bool {

@@ -3,6 +3,7 @@ package users
 import (
 	"conecta-mare-server/internal/common"
 	"conecta-mare-server/internal/modules/session"
+	"conecta-mare-server/internal/server/middlewares"
 	"conecta-mare-server/pkg/exceptions"
 	"conecta-mare-server/pkg/jwt"
 	"conecta-mare-server/pkg/security"
@@ -102,7 +103,7 @@ func (s *userService) Register(ctx context.Context, input common.RegisterUserReq
 	return nil
 }
 
-func (s *userService) Login(ctx context.Context, input common.LoginUserRequest) (*common.LoginUserResponse, error) {
+func (s *userService) Login(ctx context.Context, input common.LoginUserRequest) (*common.LoginUserResponse, *exceptions.ApiError[string]) {
 	s.logger.InfoContext(ctx, "attempting to login user, checking for existing user", "email", input.Email)
 
 	existingUser, err := s.repository.GetByEmail(ctx, input.Email)
@@ -160,6 +161,40 @@ func (s *userService) Login(ctx context.Context, input common.LoginUserRequest) 
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}, nil
+}
+
+func (s *userService) Logout(ctx context.Context) *exceptions.ApiError[string] {
+	s.logger.InfoContext(ctx, "attempting to logout user")
+
+	c, ok := ctx.Value(middlewares.AuthKey{}).(*jwt.Claims)
+	if !ok {
+		s.logger.ErrorContext(ctx, "error while attempting to get auth values from context")
+		return exceptions.MakeApiErrorWithStatus(http.StatusUnauthorized, exceptions.ErrUnauthorized)
+	}
+
+	s.logger.InfoContext(ctx, "destructured data from context, logging out user", "user_id", c.UserID)
+
+	activeSession, err := s.sessionService.GetActiveSessionByUserID(ctx, c.UserID)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "error while attempting to get user active sessions", "user_id", c.UserID, "err", err)
+		return exceptions.MakeGenericApiError()
+	}
+
+	if activeSession == nil {
+		s.logger.WarnContext(ctx, "active session not found for user", "user_id", c.UserID)
+		return exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, exceptions.ErrActiveSessionNotFound)
+	}
+
+	activeSession.Deactivate()
+
+	sess, err := s.sessionService.UpdateSession(ctx, activeSession)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "error while attempting to update user session", "user_id", c.UserID, "err", err)
+		return exceptions.MakeGenericApiError()
+	}
+
+	s.logger.InfoContext(ctx, "user logged out with success", "user_id", c.UserID, "session_id", sess.ToModel().ID)
+	return nil
 }
 
 func (s *userService) UploadUserPicture(ctx context.Context, userID string, fileHeader *multipart.FileHeader) (string, error) {
