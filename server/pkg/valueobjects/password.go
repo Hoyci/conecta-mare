@@ -1,7 +1,7 @@
 package valueobjects
 
 import (
-	"conecta-mare-server/pkg/crypto"
+	"conecta-mare-server/pkg/security"
 	"errors"
 )
 
@@ -13,7 +13,7 @@ func NewPassword(plaintext string) (Password, error) {
 	if len(plaintext) < 8 {
 		return Password{}, errors.New("password must be at least 8 characters")
 	}
-	hash, err := crypto.HashPassword(plaintext)
+	hash, err := security.HashPassword(plaintext)
 	if err != nil {
 		return Password{}, err
 	}
@@ -21,5 +21,5 @@ func NewPassword(plaintext string) (Password, error) {
 }
 
 func (p Password) Matches(plaintext string) bool {
-	return crypto.PasswordMatches(plaintext, p.Hash)
+	return security.PasswordMatches(plaintext, p.Hash)
 }

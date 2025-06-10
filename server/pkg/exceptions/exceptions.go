@@ -22,6 +22,7 @@ var (
 	ErrPasswordMatch             = errors.New("password and confirm password doesnt match")
 	ErrInvalidLoginAttempt       = errors.New("email or password is invalid")
 	ErrUserNotFound              = errors.New("user was not found")
+	ErrUserDisabled              = errors.New("user not active")
 	ErrEmailTaken                = errors.New("email already exists")
 	ErrInvalidSigningMethod      = errors.New("invalid token signing method")
 	ErrUnauthorized              = errors.New("unauthorized attempt to access resource")

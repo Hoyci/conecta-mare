@@ -3,8 +3,10 @@ package main
 import (
 	"conecta-mare-server/internal/config"
 	"conecta-mare-server/internal/database"
+	"conecta-mare-server/internal/modules/session"
 	"conecta-mare-server/internal/modules/users"
 	"conecta-mare-server/internal/server"
+	"conecta-mare-server/pkg/jwt"
 	"conecta-mare-server/pkg/storage"
 	"context"
 	"fmt"
@@ -19,18 +21,14 @@ import (
 )
 
 func gracefulShutdown(apiServer *http.Server, done chan bool, logger *slog.Logger) {
-	// Create context that listens for the interrupt signal from the OS.
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	// Listen for the interrupt signal.
 	<-ctx.Done()
 
 	logger.InfoContext(ctx, "shutting down gracefully, press Ctrl+C again to force")
-	stop() // Allow Ctrl+C to force shutdown
+	stop()
 
-	// The context is used to inform the server it has 5 seconds to finish
-	// the request it is currently handling
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := apiServer.Shutdown(ctx); err != nil {
@@ -39,7 +37,6 @@ func gracefulShutdown(apiServer *http.Server, done chan bool, logger *slog.Logge
 
 	logger.InfoContext(ctx, "Server exiting")
 
-	// Notify the main goroutine that the shutdown is complete
 	done <- true
 }
 
@@ -84,17 +81,20 @@ func main() {
 		cfg.StorageBucketName,
 	)
 
+	tokenProvider := jwt.NewProvider(cfg.JWTAccessKey, cfg.JWTRefreshKey)
+
+	sessionsRepo := session.NewRepo(db.DB())
 	usersRepo := users.NewRepo(db.DB())
 
-	usersService := users.NewService(usersRepo, storageClient, logger)
+	sessionsService := session.NewService(sessionsRepo, logger)
+
+	usersService := users.NewService(usersRepo, sessionsService, storageClient, *tokenProvider, logger)
 
 	usersHandler := users.NewHandler(usersService)
 	usersHandler.RegisterRoutes(router)
 
-	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)
 
-	// Run graceful shutdown in a separate goroutine
 	go gracefulShutdown(server, done, logger)
 
 	err := server.ListenAndServe()
@@ -102,7 +102,6 @@ func main() {
 		panic(fmt.Sprintf("http server error: %s", err))
 	}
 
-	// Wait for the graceful shutdown to complete
 	<-done
 	logger.Info("Graceful shutdown complete.")
 }
