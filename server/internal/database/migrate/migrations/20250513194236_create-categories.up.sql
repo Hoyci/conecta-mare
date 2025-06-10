@@ -47,8 +47,8 @@ $$ LANGUAGE plpgsql STRICT;
 CREATE TABLE IF NOT EXISTS categories (
   id          VARCHAR(255) PRIMARY KEY DEFAULT new_id('category'),
   name        VARCHAR(255) NOT NULL UNIQUE,
-  icon        TEXT,
-  created_at  TIMESTAMP   NOT NULL DEFAULT NOW(),
+  icon        TEXT NOT NULL,
+  created_at  TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at  TIMESTAMP,
   deleted_at  TIMESTAMP
 );

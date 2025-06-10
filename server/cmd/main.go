@@ -3,7 +3,9 @@ package main
 import (
 	"conecta-mare-server/internal/config"
 	"conecta-mare-server/internal/database"
+	"conecta-mare-server/internal/modules/categories"
 	"conecta-mare-server/internal/modules/session"
+	"conecta-mare-server/internal/modules/subcategories"
 	"conecta-mare-server/internal/modules/users"
 	"conecta-mare-server/internal/server"
 	"conecta-mare-server/pkg/jwt"
@@ -83,12 +85,18 @@ func main() {
 
 	tokenProvider := jwt.NewProvider(cfg.JWTAccessKey, cfg.JWTRefreshKey)
 
+	subcategoriesRepo := subcategories.NewRepo(db.DB())
+	categoriesRepo := categories.NewRepo(db.DB())
 	sessionsRepo := session.NewRepo(db.DB())
 	usersRepo := users.NewRepo(db.DB())
 
 	sessionsService := session.NewService(sessionsRepo, logger)
-
+	subcategoriesService := subcategories.NewService(subcategoriesRepo, logger)
 	usersService := users.NewService(usersRepo, sessionsService, storageClient, *tokenProvider, logger)
+	categoriesService := categories.NewService(categoriesRepo, subcategoriesService, usersService, logger)
+
+	categoriesHandler := categories.NewHandler(categoriesService)
+	categoriesHandler.RegisterRoutes(router)
 
 	usersHandler := users.NewHandler(usersService, cfg.JWTAccessKey)
 	usersHandler.RegisterRoutes(router)
