@@ -41,6 +41,7 @@ func (h userHandler) RegisterRoutes(r *chi.Mux) {
 
 			// Private
 			r.With(m.WithAuth).Patch("/logout", h.handleLogout)
+			r.With(m.WithAuth).Get("/", h.handleGetSigned)
 		},
 	)
 }
@@ -150,4 +151,24 @@ func (h userHandler) handleLogout(w http.ResponseWriter, r *http.Request) {
 	})
 
 	httphelpers.WriteSuccess(w, http.StatusOK)
+}
+
+func (h userHandler) handleGetSigned(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	user, err := h.usersService.GetSigned(ctx)
+	if err != nil {
+		httphelpers.WriteJSON(w, err.Code, err.Err)
+	}
+
+	httphelpers.WriteJSON(w, http.StatusOK, &common.UserResponse{
+		User: &common.User{
+			ID:            user.ID(),
+			Name:          user.Name(),
+			Email:         user.Email(),
+			Role:          user.Role(),
+			AvatarURL:     user.AvatarURL(),
+			SubcategoryID: user.SubcategoryID(),
+		},
+	})
 }

@@ -121,27 +121,18 @@ func (u *User) Role() valueobjects.Role {
 	return u.role
 }
 
-func (u *User) SubcategoryID() string {
-	if u.subcategoryID != nil {
-		return *u.subcategoryID
-	}
-	return ""
+func (u *User) SubcategoryID() *string {
+	return u.subcategoryID
 }
 
 func (u *User) CreatedAt() time.Time {
 	return u.createdAt
 }
 
-func (u *User) UpdatedAt() time.Time {
-	if u.updatedAt != nil {
-		return *u.updatedAt
-	}
-	return time.Time{}
+func (u *User) UpdatedAt() *time.Time {
+	return u.updatedAt
 }
 
-func (u *User) DeletedAt() time.Time {
-	if u.deletedAt != nil {
-		return *u.deletedAt
-	}
-	return time.Time{}
+func (u *User) DeletedAt() *time.Time {
+	return u.deletedAt
 }

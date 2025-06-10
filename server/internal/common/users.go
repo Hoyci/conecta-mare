@@ -12,7 +12,7 @@ type (
 		Email         string            `json:"email"`
 		Role          valueobjects.Role `json:"role"`
 		AvatarURL     string            `json:"avatar_url"`
-		SubcategoryID *string           `json:"subcategory_id"`
+		SubcategoryID *string           `json:"subcategory_id,omitempty"`
 	}
 
 	RegisterUserRequest struct {
