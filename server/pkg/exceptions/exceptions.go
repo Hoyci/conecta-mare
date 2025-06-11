@@ -40,6 +40,7 @@ var (
 	ErrTokenExpired              = errors.New("token expired")
 	ErrCategoriesNotFound        = errors.New("any category found")
 	ErrSubcategoriesNotFound     = errors.New("any subcategory found")
+	ErrInvalidJSON               = errors.New("invalid json")
 )
 
 func IsValidSqlErr(err error) bool {

@@ -52,6 +52,9 @@ func (r *sessionsRepository) GetActiveByUserID(ctx context.Context, userID strin
 		"SELECT * FROM sessions WHERE user_id = $1 AND active = true LIMIT 1",
 		userID,
 	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}

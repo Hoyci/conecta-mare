@@ -86,9 +86,7 @@ func (ur *usersRepository) Register(ctx context.Context, user *User) error {
 			name,
 			email,
 			password_hash,
-			avatar_url,
 			role,
-			subcategory_id,
 			created_at,
 			updated_at,
 			deleted_at
@@ -97,9 +95,7 @@ func (ur *usersRepository) Register(ctx context.Context, user *User) error {
 			:name,
 			:email,
 			:password_hash,
-			:avatar_url,
 			:role,
-			:subcategory_id,
 			:created_at,
 			:updated_at,
 			:deleted_at

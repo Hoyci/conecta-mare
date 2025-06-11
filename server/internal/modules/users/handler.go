@@ -6,11 +6,13 @@ import (
 	"conecta-mare-server/pkg/exceptions"
 	"conecta-mare-server/pkg/httphelpers"
 	"conecta-mare-server/pkg/jwt"
+	"conecta-mare-server/pkg/security"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"sync"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-playground/form/v4"
 )
 
 var (
@@ -46,50 +48,34 @@ func (h userHandler) RegisterRoutes(r *chi.Mux) {
 	)
 }
 
-var formDecoder = form.NewDecoder()
-
 func (h userHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	r.Body = http.MaxBytesReader(w, r.Body, 6<<20)
-
-	if err := r.ParseMultipartForm(5 << 20); err != nil {
-		apiErr := exceptions.MakeGenericApiError()
+	var req common.RegisterUserRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		apiErr := exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, exceptions.ErrInvalidJSON)
 		httphelpers.WriteJSON(w, apiErr.Code, apiErr)
 		return
 	}
 
-	var formData common.RegisterUserRequest
-	if err := formDecoder.Decode(&formData, r.PostForm); err != nil {
-		apiErr := exceptions.MakeValidationError(err)
-		httphelpers.WriteJSON(w, apiErr.Code, apiErr)
-		return
-	}
+	fmt.Println(req)
 
-	file, header, err := r.FormFile("avatar")
-	if err != nil {
-		apiErr := exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, exceptions.ErrAvatarEmpty)
-		httphelpers.WriteJSON(w, apiErr.Code, apiErr)
-		return
-	}
-	defer file.Close()
+	fmt.Println(req.Password, req.ConfirmPassword)
 
-	formData.Avatar = header
-
-	if header.Size > 5<<20 {
-		apiErr := exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, exceptions.ErrAvatarTooLarge)
-		httphelpers.WriteJSON(w, apiErr.Code, apiErr)
-		return
-	}
-
-	if formData.Password != formData.ConfirmPassword {
+	if req.Password != req.ConfirmPassword {
 		apiErr := exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, exceptions.ErrPasswordMatch)
 		httphelpers.WriteJSON(w, apiErr.Code, apiErr)
 		return
 	}
 
-	err = h.usersService.Register(ctx, formData)
+	err := security.ValidatePassword(req.Password)
 	if err != nil {
+		apiErr := exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, err)
+		httphelpers.WriteJSON(w, apiErr.Code, apiErr)
+		return
+	}
+
+	if err := h.usersService.Register(ctx, req); err != nil {
 		var apiErr *exceptions.ApiError[string]
 		if castedErr, ok := err.(*exceptions.ApiError[string]); ok {
 			apiErr = castedErr
@@ -158,17 +144,21 @@ func (h userHandler) handleGetSigned(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.usersService.GetSigned(ctx)
 	if err != nil {
-		httphelpers.WriteJSON(w, err.Code, err.Err)
+		httphelpers.WriteJSON(w, err.Code, err)
+		return
+	}
+
+	if user == nil {
+		httphelpers.WriteJSON(w, http.StatusUnauthorized, exceptions.ErrTokenExpired)
+		return
 	}
 
 	httphelpers.WriteJSON(w, http.StatusOK, &common.UserResponse{
 		User: &common.User{
-			ID:            user.ID(),
-			Name:          user.Name(),
-			Email:         user.Email(),
-			Role:          user.Role(),
-			AvatarURL:     user.AvatarURL(),
-			SubcategoryID: user.SubcategoryID(),
+			ID:    user.ID(),
+			Name:  user.Name(),
+			Email: user.Email(),
+			Role:  user.Role(),
 		},
 	})
 }
