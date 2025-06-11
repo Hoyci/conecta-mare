@@ -2,7 +2,6 @@ package common
 
 import (
 	"conecta-mare-server/pkg/valueobjects"
-	"mime/multipart"
 )
 
 type (
@@ -16,13 +15,11 @@ type (
 	}
 
 	RegisterUserRequest struct {
-		Name            string                `form:"name"`
-		Email           string                `form:"email"`
-		Role            valueobjects.Role     `form:"role"`
-		Password        string                `form:"password"`
-		ConfirmPassword string                `form:"confirm_password"`
-		Avatar          *multipart.FileHeader `form:"-"`
-		SubcategoryID   *string               `form:"subcategory_id,omitempty"`
+		Name            string            `json:"name"`
+		Email           string            `json:"email"`
+		Role            valueobjects.Role `json:"role"`
+		Password        string            `json:"password"`
+		ConfirmPassword string            `json:"confirm_password"`
 	}
 
 	LoginUserRequest struct {

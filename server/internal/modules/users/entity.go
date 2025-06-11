@@ -9,16 +9,14 @@ import (
 )
 
 type User struct {
-	id            string
-	name          string
-	email         string
-	role          valueobjects.Role
-	avatarURL     string
-	passwordHash  string
-	subcategoryID *string
-	createdAt     time.Time
-	updatedAt     *time.Time
-	deletedAt     *time.Time
+	id           string
+	name         string
+	email        string
+	role         valueobjects.Role
+	passwordHash string
+	createdAt    time.Time
+	updatedAt    *time.Time
+	deletedAt    *time.Time
 }
 
 func New(
@@ -26,18 +24,16 @@ func New(
 	email,
 	passwordHash string,
 	role valueobjects.Role,
-	subcategoryID *string,
 ) (*User, error) {
 	user := User{
-		id:            uid.New("user"),
-		name:          name,
-		email:         email,
-		role:          role,
-		passwordHash:  passwordHash,
-		subcategoryID: subcategoryID,
-		createdAt:     time.Now(),
-		updatedAt:     nil,
-		deletedAt:     nil,
+		id:           uid.New("user"),
+		name:         name,
+		email:        email,
+		role:         role,
+		passwordHash: passwordHash,
+		createdAt:    time.Now(),
+		updatedAt:    nil,
+		deletedAt:    nil,
 	}
 
 	if err := user.validate(); err != nil {
@@ -49,31 +45,27 @@ func New(
 
 func NewFromModel(m models.User) *User {
 	return &User{
-		id:            m.ID,
-		name:          m.Name,
-		email:         m.Email,
-		passwordHash:  m.PasswordHash,
-		avatarURL:     m.AvatarURL,
-		role:          m.Role,
-		subcategoryID: m.SubcategoryID,
-		createdAt:     m.CreatedAt,
-		updatedAt:     m.UpdatedAt,
-		deletedAt:     m.DeletedAt,
+		id:           m.ID,
+		name:         m.Name,
+		email:        m.Email,
+		passwordHash: m.PasswordHash,
+		role:         m.Role,
+		createdAt:    m.CreatedAt,
+		updatedAt:    m.UpdatedAt,
+		deletedAt:    m.DeletedAt,
 	}
 }
 
 func (u *User) ToModel() models.User {
 	return models.User{
-		ID:            u.id,
-		Name:          u.name,
-		Email:         u.email,
-		PasswordHash:  u.passwordHash,
-		AvatarURL:     u.avatarURL,
-		Role:          u.role,
-		SubcategoryID: u.subcategoryID,
-		CreatedAt:     u.createdAt,
-		UpdatedAt:     u.updatedAt,
-		DeletedAt:     u.deletedAt,
+		ID:           u.id,
+		Name:         u.name,
+		Email:        u.email,
+		PasswordHash: u.passwordHash,
+		Role:         u.role,
+		CreatedAt:    u.createdAt,
+		UpdatedAt:    u.updatedAt,
+		DeletedAt:    u.deletedAt,
 	}
 }
 
@@ -87,13 +79,6 @@ func (u *User) validate() error {
 	if !u.role.IsValid() {
 		return exceptions.ErrInvalidRole
 	}
-	if u.role == "client" && u.subcategoryID != nil {
-		return exceptions.ErrClientCannotContainSubcat
-	}
-	if u.role == "professional" && u.subcategoryID == nil {
-		return exceptions.ErrProfessinalWithoutSubcat
-	}
-
 	return nil
 }
 
@@ -113,16 +98,8 @@ func (u *User) PasswordHash() string {
 	return u.passwordHash
 }
 
-func (u *User) AvatarURL() string {
-	return u.avatarURL
-}
-
 func (u *User) Role() valueobjects.Role {
 	return u.role
-}
-
-func (u *User) SubcategoryID() *string {
-	return u.subcategoryID
 }
 
 func (u *User) CreatedAt() time.Time {

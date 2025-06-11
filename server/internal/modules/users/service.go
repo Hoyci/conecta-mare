@@ -73,20 +73,12 @@ func (s *userService) Register(ctx context.Context, input common.RegisterUserReq
 		input.Email,
 		passwordHash.Hash,
 		input.Role,
-		input.SubcategoryID,
 	)
 	if err != nil {
 		s.logger.ErrorContext(ctx, "error while attempting to process user entity", "err", err, "email", input.Email)
 		return exceptions.MakeApiErrorWithStatus(http.StatusUnprocessableEntity, err)
 	}
 
-	avatarUrl, err := s.UploadUserPicture(ctx, user.ID(), input.Avatar)
-	if err != nil {
-		s.logger.ErrorContext(ctx, "error while attempting to upload user avatar", "err", err, "email", input.Email)
-		return exceptions.MakeGenericApiError()
-	}
-
-	user.avatarURL = avatarUrl
 	s.logger.InfoContext(ctx, "user avatar successfully created", "email", input.Email)
 
 	if err := s.repository.Register(ctx, user); err != nil {
@@ -224,7 +216,7 @@ func (s *userService) GetSigned(ctx context.Context) (*User, *exceptions.ApiErro
 	}
 	if userSession == nil {
 		s.logger.WarnContext(ctx, "session not found", "user_id", user.ID)
-		return nil, exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, exceptions.ErrActiveSessionNotFound)
+		return nil, exceptions.MakeApiErrorWithStatus(http.StatusUnauthorized, exceptions.ErrActiveSessionNotFound)
 	}
 
 	return NewFromModel(*user), nil
