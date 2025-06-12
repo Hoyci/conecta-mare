@@ -35,7 +35,7 @@ func (c *StorageClient) UploadFile(objectName string, fileHeader *multipart.File
 	}
 	defer file.Close()
 
-	_, err = c.client.PutObject(ctx, c.bucketName, fmt.Sprintf("%s/%s", "avatars", objectName), file, fileHeader.Size, minio.PutObjectOptions{
+	_, err = c.client.PutObject(ctx, c.bucketName, fmt.Sprintf("%s/%s", "", objectName), file, fileHeader.Size, minio.PutObjectOptions{
 		ContentType: fileHeader.Header.Get("Content-Type"),
 	})
 	if err != nil {

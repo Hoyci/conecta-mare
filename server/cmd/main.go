@@ -4,6 +4,7 @@ import (
 	"conecta-mare-server/internal/config"
 	"conecta-mare-server/internal/database"
 	"conecta-mare-server/internal/modules/categories"
+	"conecta-mare-server/internal/modules/onboardings"
 	"conecta-mare-server/internal/modules/session"
 	"conecta-mare-server/internal/modules/subcategories"
 	"conecta-mare-server/internal/modules/users"
@@ -89,17 +90,23 @@ func main() {
 	categoriesRepo := categories.NewRepo(db.DB())
 	sessionsRepo := session.NewRepo(db.DB())
 	usersRepo := users.NewRepo(db.DB())
+	onboardingsRepo := onboardings.NewRepo(db.DB())
 
 	sessionsService := session.NewService(sessionsRepo, logger)
 	subcategoriesService := subcategories.NewService(subcategoriesRepo, logger)
 	usersService := users.NewService(usersRepo, sessionsService, storageClient, *tokenProvider, logger)
 	categoriesService := categories.NewService(categoriesRepo, subcategoriesService, usersService, logger)
+	onboardingsService := onboardings.NewService(onboardingsRepo, storageClient, logger)
 
 	categoriesHandler := categories.NewHandler(categoriesService)
 	categoriesHandler.RegisterRoutes(router)
 
 	usersHandler := users.NewHandler(usersService, cfg.JWTAccessKey)
 	usersHandler.RegisterRoutes(router)
+
+	onboardingsHandler := onboardings.NewHandler(onboardingsService, cfg.JWTAccessKey)
+
+	onboardingsHandler.RegisterRoutes(router)
 
 	done := make(chan bool, 1)
 

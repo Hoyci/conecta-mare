@@ -10,7 +10,6 @@ import (
 
 type User struct {
 	id           string
-	name         string
 	email        string
 	role         valueobjects.Role
 	passwordHash string
@@ -20,14 +19,12 @@ type User struct {
 }
 
 func New(
-	name,
 	email,
 	passwordHash string,
 	role valueobjects.Role,
 ) (*User, error) {
 	user := User{
 		id:           uid.New("user"),
-		name:         name,
 		email:        email,
 		role:         role,
 		passwordHash: passwordHash,
@@ -46,7 +43,6 @@ func New(
 func NewFromModel(m models.User) *User {
 	return &User{
 		id:           m.ID,
-		name:         m.Name,
 		email:        m.Email,
 		passwordHash: m.PasswordHash,
 		role:         m.Role,
@@ -59,7 +55,6 @@ func NewFromModel(m models.User) *User {
 func (u *User) ToModel() models.User {
 	return models.User{
 		ID:           u.id,
-		Name:         u.name,
 		Email:        u.email,
 		PasswordHash: u.passwordHash,
 		Role:         u.role,
@@ -70,9 +65,6 @@ func (u *User) ToModel() models.User {
 }
 
 func (u *User) validate() error {
-	if u.name == "" {
-		return exceptions.ErrNameEmpty
-	}
 	if _, err := valueobjects.NewEmail(u.email); err != nil {
 		return err
 	}
@@ -84,10 +76,6 @@ func (u *User) validate() error {
 
 func (u *User) ID() string {
 	return u.id
-}
-
-func (u *User) Name() string {
-	return u.name
 }
 
 func (u *User) Email() string {

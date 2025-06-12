@@ -83,7 +83,6 @@ func (ur *usersRepository) Register(ctx context.Context, user *User) error {
 	query := `
 		INSERT INTO users (
 			id,
-			name,
 			email,
 			password_hash,
 			role,
@@ -92,7 +91,6 @@ func (ur *usersRepository) Register(ctx context.Context, user *User) error {
 			deleted_at
 		) VALUES (
 			:id,
-			:name,
 			:email,
 			:password_hash,
 			:role,

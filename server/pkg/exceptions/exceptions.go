@@ -41,6 +41,7 @@ var (
 	ErrCategoriesNotFound        = errors.New("any category found")
 	ErrSubcategoriesNotFound     = errors.New("any subcategory found")
 	ErrInvalidJSON               = errors.New("invalid json")
+	ErrUserIDRequired            = errors.New("user_id is required")
 )
 
 func IsValidSqlErr(err error) bool {
