@@ -47,7 +47,6 @@ func (s *userService) GetByID(ctx context.Context, ID string) (*User, error) {
 }
 
 func (s *userService) Register(ctx context.Context, input common.RegisterUserRequest) error {
-	// TODO: adicionar verificação de subcategoryID para validar se realmente existingser
 	s.logger.InfoContext(ctx, "attempting to create user", "email", input.Email)
 
 	existingser, err := s.repository.GetByEmail(ctx, input.Email)
@@ -69,7 +68,6 @@ func (s *userService) Register(ctx context.Context, input common.RegisterUserReq
 
 	s.logger.InfoContext(ctx, "password successfully hashed, creating user", "email", input.Email)
 	user, err := New(
-		input.Name,
 		input.Email,
 		passwordHash.Hash,
 		input.Role,

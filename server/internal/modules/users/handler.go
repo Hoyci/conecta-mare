@@ -8,7 +8,6 @@ import (
 	"conecta-mare-server/pkg/jwt"
 	"conecta-mare-server/pkg/security"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"sync"
 
@@ -58,10 +57,6 @@ func (h userHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(req)
-
-	fmt.Println(req.Password, req.ConfirmPassword)
-
 	if req.Password != req.ConfirmPassword {
 		apiErr := exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, exceptions.ErrPasswordMatch)
 		httphelpers.WriteJSON(w, apiErr.Code, apiErr)
@@ -76,13 +71,17 @@ func (h userHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.usersService.Register(ctx, req); err != nil {
-		var apiErr *exceptions.ApiError[string]
-		if castedErr, ok := err.(*exceptions.ApiError[string]); ok {
-			apiErr = castedErr
+		var jsonErr map[string]any
+		if json.Unmarshal([]byte(err.Error()), &jsonErr) == nil {
+			httphelpers.WriteJSON(w, http.StatusBadRequest, jsonErr)
 		} else {
-			apiErr = exceptions.MakeApiError(err)
+			errorResponse := map[string]any{
+				"errors": map[string]string{
+					"message": err.Error(),
+				},
+			}
+			httphelpers.WriteJSON(w, http.StatusBadRequest, errorResponse)
 		}
-		httphelpers.WriteJSON(w, apiErr.Code, apiErr)
 		return
 	}
 
@@ -144,7 +143,7 @@ func (h userHandler) handleGetSigned(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.usersService.GetSigned(ctx)
 	if err != nil {
-		httphelpers.WriteJSON(w, err.Code, err)
+		httphelpers.WriteJSON(w, err.Code, err.Error())
 		return
 	}
 
@@ -156,7 +155,6 @@ func (h userHandler) handleGetSigned(w http.ResponseWriter, r *http.Request) {
 	httphelpers.WriteJSON(w, http.StatusOK, &common.UserResponse{
 		User: &common.User{
 			ID:    user.ID(),
-			Name:  user.Name(),
 			Email: user.Email(),
 			Role:  user.Role(),
 		},
