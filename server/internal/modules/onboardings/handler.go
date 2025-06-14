@@ -15,16 +15,19 @@ import (
 )
 
 var (
-	instance *onboardingHandler
+	instance *onboardingsHandler
 	Once     sync.Once
 )
 
-func NewHandler(service OnboardingsService, accessKey string) *onboardingHandler {
+func NewHandler(
+	onboardingsService OnboardingsService,
+	accessKey string,
+) *onboardingsHandler {
 	Once.Do(
 		func() {
-			instance = &onboardingHandler{
-				service:   service,
-				accessKey: accessKey,
+			instance = &onboardingsHandler{
+				onboardingsService: onboardingsService,
+				accessKey:          accessKey,
 			}
 		},
 	)
@@ -32,15 +35,15 @@ func NewHandler(service OnboardingsService, accessKey string) *onboardingHandler
 	return instance
 }
 
-func (h *onboardingHandler) RegisterRoutes(r *chi.Mux) {
+func (h *onboardingsHandler) RegisterRoutes(r *chi.Mux) {
 	m := middlewares.NewWithAuth(h.accessKey)
 
-	r.Route("/api/v1/onboarding", func(r chi.Router) {
-		r.With(m.WithAuth).Post("/", h.handleCompleteOnboarding)
+	r.Route("/api/v1", func(r chi.Router) {
+		r.With(m.WithAuth).Post("/onboarding", h.handleCompleteOnboarding)
 	})
 }
 
-func (h *onboardingHandler) handleCompleteOnboarding(w http.ResponseWriter, r *http.Request) {
+func (h *onboardingsHandler) handleCompleteOnboarding(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	c, ok := ctx.Value(middlewares.AuthKey{}).(*jwt.Claims)
@@ -78,7 +81,7 @@ func (h *onboardingHandler) handleCompleteOnboarding(w http.ResponseWriter, r *h
 		return
 	}
 
-	if err := h.service.CompleteOnboarding(ctx, &req, r); err != nil {
+	if err := h.onboardingsService.MakeOnboarding(ctx, r, &req); err != nil {
 		var apiErr *exceptions.ApiError[string]
 		if castedErr, ok := err.(*exceptions.ApiError[string]); ok {
 			apiErr = castedErr
