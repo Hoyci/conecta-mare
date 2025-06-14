@@ -2,34 +2,35 @@ package onboardings
 
 import (
 	"conecta-mare-server/internal/common"
-	"conecta-mare-server/internal/database/models"
+	"conecta-mare-server/internal/modules/certifications"
+	"conecta-mare-server/internal/modules/serviceimages"
+	"conecta-mare-server/internal/modules/services"
+	"conecta-mare-server/internal/modules/userprofiles"
+	"conecta-mare-server/internal/modules/users"
 	"conecta-mare-server/pkg/storage"
 	"context"
 	"log/slog"
 	"net/http"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type (
-	OnboardingsRepository interface {
-		CreateUserProfile(
-			ctx context.Context,
-			profile *UserProfile,
-			certifications []*Certification,
-			services []*Service,
-			serviceImages []*ServiceImage,
-		) error
-		GetUserProfileByUserID(ctx context.Context, userID string) (*models.UserProfile, error)
-	}
 	OnboardingsService interface {
-		CompleteOnboarding(ctx context.Context, req *common.OnboardingRequest, r *http.Request) error
+		MakeOnboarding(ctx context.Context, r *http.Request, req *common.OnboardingRequest) error
 	}
-	onboardingService struct {
-		repository OnboardingsRepository
-		storage    *storage.StorageClient
-		logger     *slog.Logger
+	onboardingsService struct {
+		db                       *sqlx.DB
+		usersRepository          users.UsersRepository
+		userProfilesRepository   userprofiles.UserProfilesRepository
+		servicesRepository       services.ServicesRepository
+		serviceImagesRepository  serviceimages.ServiceImagesRepository
+		certificationsRepository certifications.CertificationsRepository
+		storage                  *storage.StorageClient
+		logger                   *slog.Logger
 	}
-	onboardingHandler struct {
-		service   OnboardingsService
-		accessKey string
+	onboardingsHandler struct {
+		onboardingsService OnboardingsService
+		accessKey          string
 	}
 )
