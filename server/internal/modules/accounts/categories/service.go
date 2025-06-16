@@ -2,8 +2,8 @@ package categories
 
 import (
 	"conecta-mare-server/internal/common"
-	"conecta-mare-server/internal/modules/subcategories"
-	"conecta-mare-server/internal/modules/users"
+	"conecta-mare-server/internal/modules/accounts/subcategories"
+	"conecta-mare-server/internal/modules/accounts/users"
 	"conecta-mare-server/pkg/exceptions"
 	"context"
 	"log/slog"

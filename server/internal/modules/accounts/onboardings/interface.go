@@ -2,11 +2,11 @@ package onboardings
 
 import (
 	"conecta-mare-server/internal/common"
-	"conecta-mare-server/internal/modules/certifications"
-	"conecta-mare-server/internal/modules/serviceimages"
-	"conecta-mare-server/internal/modules/services"
-	"conecta-mare-server/internal/modules/userprofiles"
-	"conecta-mare-server/internal/modules/users"
+	"conecta-mare-server/internal/modules/accounts/certifications"
+	"conecta-mare-server/internal/modules/accounts/serviceimages"
+	"conecta-mare-server/internal/modules/accounts/services"
+	"conecta-mare-server/internal/modules/accounts/userprofiles"
+	"conecta-mare-server/internal/modules/accounts/users"
 	"conecta-mare-server/pkg/storage"
 	"context"
 	"log/slog"

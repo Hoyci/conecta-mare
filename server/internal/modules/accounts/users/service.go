@@ -2,7 +2,7 @@ package users
 
 import (
 	"conecta-mare-server/internal/common"
-	"conecta-mare-server/internal/modules/session"
+	"conecta-mare-server/internal/modules/accounts/session"
 	"conecta-mare-server/internal/server/middlewares"
 	"conecta-mare-server/pkg/exceptions"
 	"conecta-mare-server/pkg/jwt"
