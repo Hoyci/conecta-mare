@@ -13,7 +13,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"mime/multipart"
 	"net/http"
 
 	"github.com/lib/pq"
@@ -220,20 +219,6 @@ func (s *userService) GetSigned(ctx context.Context) (*User, *exceptions.ApiErro
 	return NewFromModel(*user), nil
 }
 
-func (s *userService) UploadUserPicture(ctx context.Context, userID string, fileHeader *multipart.FileHeader) (string, error) {
-	if fileHeader == nil {
-		return "", fmt.Errorf("file header is nil")
-	}
-
-	objectName := fmt.Sprintf("%s-%s", "avatar", userID)
-	avatarURL, err := s.storageClient.UploadFile(objectName, fileHeader)
-	if err != nil {
-		return "", err
-	}
-
-	return avatarURL, nil
-}
-
 func (s *userService) CountUsersBySubcategoryIDs(ctx context.Context, subcategoryIDs []string) (map[string]int, error) {
 	s.logger.InfoContext(ctx, "attempting to count user by subcategory IDs")
 
@@ -244,4 +229,21 @@ func (s *userService) CountUsersBySubcategoryIDs(ctx context.Context, subcategor
 	}
 
 	return count, nil
+}
+
+func (s *userService) GetProfessionals(ctx context.Context) ([]*common.ProfessionalResponse, *exceptions.ApiError[string]) {
+	s.logger.InfoContext(ctx, "attemping to get professional users")
+
+	professionals, err := s.repository.GetProfessionalUsers(ctx)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "error while attempting to get professional users", "err", err)
+		return nil, exceptions.MakeGenericApiError()
+	}
+
+	if professionals == nil {
+		s.logger.WarnContext(ctx, "any professional user found")
+		return nil, nil
+	}
+
+	return professionals, nil
 }

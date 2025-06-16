@@ -35,6 +35,7 @@ func (s *categoryService) GetCategories(ctx context.Context, includeSubcats bool
 		return records, nil
 	}
 
+	// TODO: Transform this code to use JOIN instead of this multiple lines
 	categories, err := s.repository.GetCategories(ctx)
 	if err != nil {
 		s.logger.ErrorContext(ctx, "error while attempting to get categories", "err", err)

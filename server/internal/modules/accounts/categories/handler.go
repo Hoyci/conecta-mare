@@ -41,7 +41,8 @@ func (h categoryHandler) handleGetCategories(w http.ResponseWriter, r *http.Requ
 	categories, err := h.categoriesService.GetCategories(ctx, includeSubcats)
 	if err != nil {
 		httphelpers.WriteJSON(w, err.Code, err.Err)
+		return
 	}
 
-	httphelpers.WriteJSON(w, http.StatusOK, categories)
+	httphelpers.WriteJSON(w, http.StatusOK, map[string]any{"categories": categories})
 }

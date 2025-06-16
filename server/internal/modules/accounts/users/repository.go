@@ -1,6 +1,7 @@
 package users
 
 import (
+	"conecta-mare-server/internal/common"
 	"conecta-mare-server/internal/database/models"
 	"context"
 	"database/sql"
@@ -105,15 +106,21 @@ func (ur *usersRepository) Register(ctx context.Context, user *User) error {
 }
 
 func (r *usersRepository) CountBySubcategoryIDs(ctx context.Context, subcategoryIDs []string) (map[string]int, error) {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
 	if len(subcategoryIDs) == 0 {
 		return make(map[string]int), nil
 	}
 
 	query, args, err := sqlx.In(`
-        SELECT subcategory_id, COUNT(*)
-        FROM users
-        WHERE subcategory_id IN (?) AND deleted_at IS NULL
-        GROUP BY subcategory_id`, subcategoryIDs)
+		SELECT 
+			s.id,
+			count(*)
+		FROM users u 
+		INNER JOIN user_profiles up ON up.user_id = u.id
+		LEFT JOIN subcategories s ON s.id = up.subcategory_id AND s.id IN (?)
+		GROUP BY s.id`, subcategoryIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -135,4 +142,42 @@ func (r *usersRepository) CountBySubcategoryIDs(ctx context.Context, subcategory
 		counts[subcategoryID] = count
 	}
 	return counts, nil
+}
+
+func (ur *usersRepository) GetProfessionalUsers(ctx context.Context) ([]*common.ProfessionalResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	var professionals []*common.ProfessionalResponse
+	err := ur.db.SelectContext(
+		ctx,
+		&professionals,
+		`
+			SELECT 
+					u.id as user_id,
+					u.email,
+					u."role",
+					up.full_name,
+					up.profile_image,
+					up.job_description,
+					up.phone,
+					up.social_links,
+					c.name AS category_name,
+					s."name" AS subcategory_name,
+					5 as rating,
+					'vila do pinheiro' as location
+			FROM users u
+			INNER JOIN user_profiles up ON up.user_id = u.id
+			LEFT JOIN categories c ON c.id = up.category_id 
+			LEFT JOIN subcategories s ON s.id = up.subcategory_id 
+			WHERE u."role" = 'professional' AND u.deleted_at IS NULL;
+		`)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return professionals, nil
 }

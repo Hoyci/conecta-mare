@@ -1,0 +1,73 @@
+import { env } from "@/config/env";
+import { RenewAccessTokenResponse, Session } from "@/types/auth";
+import { authFetch } from "@/lib/auth-fetch";
+import { User } from "@/types/user";
+
+export const loginUser = async (email: string, password: string) => {
+  const apiUrl = `${env.data.VITE_API_URL}/api/v1/auth/login`;
+
+  const res = await fetch(apiUrl, {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => null);
+    throw new Error(errorData);
+  }
+
+  const user = await res.json();
+  return user as Session;
+};
+
+export const signUpUser = async (payload: FormData) => {
+  const apiUrl = `${env.data.VITE_API_URL}/api/v1/users/register`;
+
+  const res = await fetch(apiUrl, {
+    method: "POST",
+    body: payload,
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => null);
+    throw new Error(errorData);
+  }
+
+  const user = await res.json();
+  return user as User;
+};
+
+export const logoutUser = async () => {
+  const apiUrl = `${env.data.VITE_API_URL}/api/v1/auth/logout`;
+
+  const res = await authFetch(apiUrl, {
+    method: "PATCH",
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => null);
+    throw new Error(errorData);
+  }
+
+  return res;
+};
+
+export const refreshAccessToken = async () => {
+  const apiUrl = `${env.data.VITE_API_URL}/api/v1/auth/refresh`;
+
+  const res = await fetch(apiUrl, {
+    method: "POST",
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => null);
+    throw new Error(errorData);
+  }
+
+  return (await res.json()) as RenewAccessTokenResponse;
+};

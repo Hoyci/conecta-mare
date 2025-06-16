@@ -1,0 +1,80 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 20% 98%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 214 80% 35%; /* ConectaPro blue */
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 135 55% 40%; /* ConectaPro green */
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 214 80% 35%;
+
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  .input-conecta {
+    @apply px-4 py-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-conecta-blue;
+  }
+
+  .btn-primary {
+    @apply bg-conecta-blue text-white px-4 py-3 rounded-md font-medium hover:bg-conecta-blue-dark transition-colors;
+  }
+
+  .btn-secondary {
+    @apply bg-conecta-green text-white px-4 py-3 rounded-md font-medium hover:bg-conecta-green-dark transition-colors;
+  }
+}
+
+#root {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+@layer components {
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+  
+  .animate-shimmer {
+    animation: shimmer 1.5s infinite;
+  }
+}

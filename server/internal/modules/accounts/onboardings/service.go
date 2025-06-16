@@ -12,6 +12,7 @@ import (
 	"conecta-mare-server/pkg/exceptions"
 	"conecta-mare-server/pkg/storage"
 	"conecta-mare-server/pkg/uid"
+	"conecta-mare-server/pkg/valueobjects"
 	"context"
 	"fmt"
 	"log/slog"
@@ -57,6 +58,11 @@ func (s *onboardingsService) MakeOnboarding(ctx context.Context, r *http.Request
 	if user == nil {
 		s.logger.ErrorContext(ctx, "user does not exists", "user_id", req.UserID)
 		return exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, fmt.Errorf("user with id %s does not exists", req.UserID))
+	}
+
+	if user.Role != valueobjects.Professional {
+		s.logger.WarnContext(ctx, "user trying to do onboarding as a client user", "user_id", req.UserID)
+		return exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, fmt.Errorf("only professional can do onboarding"))
 	}
 
 	userProfile, err := s.userProfilesRepository.FindByUserID(ctx, req.UserID)
