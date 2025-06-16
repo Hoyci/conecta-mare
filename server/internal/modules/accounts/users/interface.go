@@ -3,7 +3,7 @@ package users
 import (
 	"conecta-mare-server/internal/common"
 	"conecta-mare-server/internal/database/models"
-	"conecta-mare-server/internal/modules/session"
+	"conecta-mare-server/internal/modules/accounts/session"
 	"conecta-mare-server/pkg/exceptions"
 	"conecta-mare-server/pkg/jwt"
 	"conecta-mare-server/pkg/storage"
