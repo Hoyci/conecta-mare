@@ -2,9 +2,11 @@ package onboardings
 
 import (
 	"conecta-mare-server/internal/common"
+	"conecta-mare-server/internal/modules/accounts/categories"
 	"conecta-mare-server/internal/modules/accounts/certifications"
 	"conecta-mare-server/internal/modules/accounts/serviceimages"
 	"conecta-mare-server/internal/modules/accounts/services"
+	"conecta-mare-server/internal/modules/accounts/subcategories"
 	"conecta-mare-server/internal/modules/accounts/userprofiles"
 	"conecta-mare-server/internal/modules/accounts/users"
 	"conecta-mare-server/pkg/exceptions"
@@ -25,6 +27,8 @@ func NewService(
 	servicesRepository services.ServicesRepository,
 	serviceImagesRepository serviceimages.ServiceImagesRepository,
 	certificationsRepository certifications.CertificationsRepository,
+	categoriesRepository categories.CategoriesRepository,
+	subcategoriesRepository subcategories.SubcategoriesRepository,
 	storage *storage.StorageClient,
 	logger *slog.Logger,
 ) OnboardingsService {
@@ -35,6 +39,8 @@ func NewService(
 		servicesRepository:       servicesRepository,
 		serviceImagesRepository:  serviceImagesRepository,
 		certificationsRepository: certificationsRepository,
+		categoriesRepository:     categoriesRepository,
+		subcategoriesRepository:  subcategoriesRepository,
 		storage:                  storage,
 		logger:                   logger,
 	}
@@ -42,6 +48,16 @@ func NewService(
 
 func (s *onboardingsService) MakeOnboarding(ctx context.Context, r *http.Request, req *common.OnboardingRequest) error {
 	s.logger.InfoContext(ctx, "starting onboarding process", "user_id", req.UserID)
+
+	user, err := s.usersRepository.GetByID(ctx, req.UserID)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "failed to verify if user already exists", "err", err)
+		return exceptions.MakeGenericApiError()
+	}
+	if user == nil {
+		s.logger.ErrorContext(ctx, "user does not exists", "user_id", req.UserID)
+		return exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, fmt.Errorf("user with id %s does not exists", req.UserID))
+	}
 
 	userProfile, err := s.userProfilesRepository.FindByUserID(ctx, req.UserID)
 	if err != nil {
@@ -51,6 +67,26 @@ func (s *onboardingsService) MakeOnboarding(ctx context.Context, r *http.Request
 	if userProfile != nil {
 		s.logger.WarnContext(ctx, "onboarding already exists", "user_id", req.UserID)
 		return exceptions.MakeApiErrorWithStatus(http.StatusConflict, fmt.Errorf("onboarding already done"))
+	}
+
+	category, err := s.categoriesRepository.GetByID(ctx, req.CategoryID)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "failed to verify if category exists", "category_id", req.CategoryID, "err", err)
+		return exceptions.MakeGenericApiError()
+	}
+	if category == nil {
+		s.logger.WarnContext(ctx, "category does not exists", "category_id", req.CategoryID)
+		return exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, fmt.Errorf("category with category_id %s does not exists", req.CategoryID))
+	}
+
+	subcategory, err := s.subcategoriesRepository.GetByID(ctx, req.SubcategoryID)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "failed to verify if category exists", "category_id", req.SubcategoryID, "err", err)
+		return exceptions.MakeGenericApiError()
+	}
+	if subcategory == nil {
+		s.logger.WarnContext(ctx, "subcategory does not exists", "subcategory_id", req.SubcategoryID)
+		return exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, fmt.Errorf("subcategory with subcategory_id %s does not exists", req.SubcategoryID))
 	}
 
 	s.logger.InfoContext(ctx, "any user_profile found, making onboarding", "user_id", req.UserID)
@@ -117,6 +153,8 @@ func (s *onboardingsService) createUserProfileTx(
 	profile, err := userprofiles.New(
 		input.UserID,
 		input.FullName,
+		input.CategoryID,
+		input.SubcategoryID,
 		profileImageURL,
 		input.JobDescription,
 		input.Phone,

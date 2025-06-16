@@ -2,6 +2,8 @@ CREATE TABLE IF NOT EXISTS user_profiles (
     id VARCHAR(255) PRIMARY KEY DEFAULT new_id('userprofile'),
     user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     full_name VARCHAR(255),
+    category_id VARCHAR(255) REFERENCES categories(id),
+    subcategory_id VARCHAR(255) REFERENCES subcategories(id),
     profile_image TEXT,
     job_description TEXT,
     phone VARCHAR(20),

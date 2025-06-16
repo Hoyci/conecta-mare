@@ -72,6 +72,19 @@ func (h *onboardingsHandler) handleCompleteOnboarding(w http.ResponseWriter, r *
 		return
 	}
 
+	if req.CategoryID == "" {
+		apiErr := exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, fmt.Errorf("category_id is required"))
+		httphelpers.WriteJSON(w, apiErr.Code, apiErr)
+		return
+	}
+
+	if req.SubcategoryID == "" {
+		apiErr := exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, fmt.Errorf("subcategory_id is required"))
+		httphelpers.WriteJSON(w, apiErr.Code, apiErr)
+		return
+
+	}
+
 	req.UserID = c.UserID
 
 	_, _, err := r.FormFile("profile_image")

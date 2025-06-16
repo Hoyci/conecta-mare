@@ -19,6 +19,22 @@ func NewRepo(db *sqlx.DB) CategoriesRepository {
 	return &categoriesRepository{db: db}
 }
 
+func (r *categoriesRepository) GetByID(ctx context.Context, ID string) (*Category, error) {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	var category models.Category
+	err := r.db.GetContext(ctx, &category, "SELECT * FROM categories WHERE id = $1 AND deleted_at IS NULL", ID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return NewFromModel(category), nil
+}
+
 func (r *categoriesRepository) GetCategories(ctx context.Context) ([]*models.Category, error) {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
