@@ -14,6 +14,8 @@ type UserProfile struct {
 	id             string
 	userID         string
 	fullName       string
+	categoryID     string
+	subcategoryID  string
 	profileImage   string
 	jobDescription string
 	phone          string
@@ -25,6 +27,8 @@ type UserProfile struct {
 func New(
 	userID,
 	fullName,
+	categoryID,
+	subcategoryID,
 	profileImage,
 	jobDescription,
 	phone string,
@@ -34,6 +38,8 @@ func New(
 		id:             uid.New("userprofile"),
 		userID:         userID,
 		fullName:       fullName,
+		categoryID:     categoryID,
+		subcategoryID:  subcategoryID,
 		profileImage:   profileImage,
 		jobDescription: jobDescription,
 		phone:          phone,
@@ -73,6 +79,8 @@ func (up *UserProfile) UserProfileToModel() models.UserProfile {
 		ID:             up.id,
 		UserID:         up.userID,
 		FullName:       up.fullName,
+		CategoryID:     up.categoryID,
+		SubcategoryID:  up.subcategoryID,
 		ProfileImage:   up.profileImage,
 		JobDescription: up.jobDescription,
 		Phone:          up.phone,

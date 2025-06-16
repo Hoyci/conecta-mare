@@ -8,6 +8,7 @@ import (
 
 type (
 	SubcategoriesRepository interface {
+		GetByID(ctx context.Context, ID string) (*Subcategory, error)
 		GetByCategoriesID(ctx context.Context, categoriesID []string) ([]*models.Subcategory, error)
 	}
 	SubcategoriesService interface {

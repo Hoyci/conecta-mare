@@ -6,6 +6,8 @@ type (
 	OnboardingRequest struct {
 		UserID         string              `json:"user_id"`
 		FullName       string              `json:"full_name"`
+		CategoryID     string              `json:"category_id"`
+		SubcategoryID  string              `json:"subcategory_id"`
 		JobDescription string              `json:"job_description"`
 		Phone          string              `json:"phone"`
 		SocialLinks    map[string]string   `json:"social_links"`

@@ -103,7 +103,18 @@ func main() {
 	subcategoriesService := subcategories.NewService(subcategoriesRepo, logger)
 	usersService := users.NewService(usersRepo, sessionsService, storageClient, *tokenProvider, logger)
 	categoriesService := categories.NewService(categoriesRepo, subcategoriesService, usersService, logger)
-	onboardingsService := onboardings.NewService(db.DB(), usersRepo, userProfilesRepo, servicesRepo, serviceImagesRepo, certificationsRepo, storageClient, logger)
+	onboardingsService := onboardings.NewService(
+		db.DB(),
+		usersRepo,
+		userProfilesRepo,
+		servicesRepo,
+		serviceImagesRepo,
+		certificationsRepo,
+		categoriesRepo,
+		subcategoriesRepo,
+		storageClient,
+		logger,
+	)
 
 	categoriesHandler := categories.NewHandler(categoriesService)
 	categoriesHandler.RegisterRoutes(router)

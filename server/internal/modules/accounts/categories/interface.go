@@ -12,6 +12,7 @@ import (
 
 type (
 	CategoriesRepository interface {
+		GetByID(ctx context.Context, ID string) (*Category, error)
 		GetCategories(ctx context.Context) ([]*models.Category, error)
 		GetCategoriesWithSubcats(ctx context.Context) ([]*common.CategoryWithSubcats, error)
 	}

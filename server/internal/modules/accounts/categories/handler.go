@@ -26,7 +26,6 @@ func NewHandler(categoriesService CategoriesService) *categoryHandler {
 }
 
 func (h categoryHandler) RegisterRoutes(r *chi.Mux) {
-	// m := middlewares.NewWithAuth(h.accessKey)
 	r.Route(
 		"/api/v1/categories", func(r chi.Router) {
 			// Public
