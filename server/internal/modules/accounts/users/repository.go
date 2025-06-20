@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -144,26 +145,20 @@ func (r *usersRepository) CountBySubcategoryIDs(ctx context.Context, subcategory
 	return counts, nil
 }
 
-func (ur *usersRepository) GetProfessionalUsers(ctx context.Context) ([]*common.ProfessionalResponse, error) {
+func (ur *usersRepository) GetProfessionalUsers(ctx context.Context) ([]*common.GetProfessionalsResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	var professionals []*common.ProfessionalResponse
+	var professionals []*common.GetProfessionalsResponse
 	err := ur.db.SelectContext(
 		ctx,
 		&professionals,
 		`
 			SELECT 
 					u.id as user_id,
-					u.email,
-					u."role",
 					up.full_name,
 					up.profile_image,
 					up.job_description,
-					up.phone,
-					up.social_links,
-					c.name AS category_name,
-					s."name" AS subcategory_name,
 					5 as rating,
 					'vila do pinheiro' as location
 			FROM users u
@@ -180,4 +175,111 @@ func (ur *usersRepository) GetProfessionalUsers(ctx context.Context) ([]*common.
 	}
 
 	return professionals, nil
+}
+
+func (ur *usersRepository) GetProfessionalByID(ctx context.Context, ID string) (*common.GetProfessionalByIDResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	var raw common.GetProfessionalByIDRaw
+
+	err := ur.db.GetContext(
+		ctx,
+		&raw,
+		`
+		SELECT 
+				u.id as user_id,
+				u.email,
+				up.full_name,
+				up.profile_image,
+				up.job_description,
+				up.phone,
+				up.social_links,
+				ca.name as category_name,
+				sc.name as subcategory_name,
+				5 as rating,
+				'vila do pinheiro' as location,
+				(
+						SELECT json_agg(
+								json_build_object(
+										'name', p.name,
+										'description', p.description,
+										'images', COALESCE(images.images, '[]'::json)
+								)
+						)
+						FROM projects p
+						LEFT JOIN LATERAL (
+								SELECT json_agg(
+										json_build_object(
+												'url', pi.url,
+												'ordering', pi.ordering
+										)
+								) AS images
+								FROM project_images pi
+								WHERE pi.project_id = p.id
+						) images ON true
+						WHERE p.user_profile_id = up.id
+				) AS projects,
+				(
+						SELECT json_agg(
+								json_build_object(
+										'institution', ce.institution,
+										'course_name', ce.course_name,
+										'start_date', TO_CHAR(ce.start_date, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
+										'end_date', CASE 
+												WHEN ce.end_date IS NULL THEN NULL 
+												ELSE TO_CHAR(ce.end_date, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') 
+										END
+								)
+						)
+						FROM certifications ce
+						WHERE ce.user_profile_id = up.id
+				) AS certifications
+		FROM users u
+		INNER JOIN user_profiles up ON up.user_id = u.id
+		LEFT JOIN categories ca ON ca.id = up.category_id 
+		LEFT JOIN subcategories sc ON sc.id = up.subcategory_id 
+		WHERE 
+				u.role = 'professional' 
+				AND u.id = $1
+				AND u.deleted_at IS NULL;
+		`,
+		ID,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	var projects []common.Project
+	var certifications []common.Certification
+
+	if err := raw.ProjectsJSON.Unmarshal(&projects); err != nil {
+		return nil, fmt.Errorf("error parsing services json: %w", err)
+	}
+	if err := raw.CertificationsJSON.Unmarshal(&certifications); err != nil {
+		return nil, fmt.Errorf("error parsing certifications json: %w", err)
+	}
+
+	professional := &common.GetProfessionalByIDResponse{
+		UserID:          raw.UserID,
+		Email:           raw.Email,
+		FullName:        raw.FullName,
+		ProfileImage:    raw.ProfileImage,
+		JobDescription:  raw.JobDescription,
+		Phone:           raw.Phone,
+		SocialLinks:     raw.SocialLinks,
+		Location:        raw.Location,
+		Rating:          raw.Rating,
+		CategoryName:    raw.CategoryName,
+		SubcategoryName: raw.SubcategoryName,
+		Projects:        projects,
+		Certifications:  certifications,
+	}
+
+	fmt.Println("professional", professional)
+
+	return professional, nil
 }

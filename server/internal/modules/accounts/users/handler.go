@@ -40,6 +40,7 @@ func (h userHandler) RegisterRoutes(r *chi.Mux) {
 			r.Post("/register", h.handleRegister)
 			r.Post("/login", h.handleLogin)
 			r.Get("/professionals", h.handleGetProfessionals)
+			r.Get("/professionals/{user_id}", h.handleGetProfessionalByID)
 
 			// Private
 			r.With(m.WithAuth).Patch("/logout", h.handleLogout)
@@ -175,5 +176,22 @@ func (h userHandler) handleGetProfessionals(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	httphelpers.WriteJSON(w, http.StatusOK, map[string][]*common.ProfessionalResponse{"professionals": professionals})
+	httphelpers.WriteJSON(w, http.StatusOK, map[string][]*common.GetProfessionalsResponse{"professionals": professionals})
+}
+
+func (h userHandler) handleGetProfessionalByID(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := chi.URLParam(r, "user_id")
+
+	professional, err := h.usersService.GetProfessionalByID(ctx, userID)
+	if err != nil {
+		httphelpers.WriteJSON(w, err.Code, err.Error())
+		return
+	}
+	if professional == nil {
+		httphelpers.WriteJSON(w, http.StatusNoContent, map[string]string{"message": "any professional found"})
+		return
+	}
+
+	httphelpers.WriteJSON(w, http.StatusOK, map[string]*common.GetProfessionalByIDResponse{"data": professional})
 }

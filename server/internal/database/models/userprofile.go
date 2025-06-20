@@ -28,7 +28,7 @@ type Certification struct {
 	CreatedAt     time.Time  `db:"created_at"`
 }
 
-type Service struct {
+type Project struct {
 	ID            string    `db:"id"`
 	UserProfileID string    `db:"user_profile_id"`
 	Name          string    `db:"name"`
@@ -36,9 +36,9 @@ type Service struct {
 	CreatedAt     time.Time `db:"created_at"`
 }
 
-type ServiceImage struct {
+type ProjectImage struct {
 	ID        string    `db:"id"`
-	ServiceID string    `db:"service_id"`
+	ProjectID string    `db:"project_id"`
 	URL       string    `db:"url"`
 	Ordering  int       `db:"ordering"`
 	CreatedAt time.Time `db:"created_at"`

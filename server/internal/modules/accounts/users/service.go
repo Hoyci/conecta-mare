@@ -231,7 +231,7 @@ func (s *userService) CountUsersBySubcategoryIDs(ctx context.Context, subcategor
 	return count, nil
 }
 
-func (s *userService) GetProfessionals(ctx context.Context) ([]*common.ProfessionalResponse, *exceptions.ApiError[string]) {
+func (s *userService) GetProfessionals(ctx context.Context) ([]*common.GetProfessionalsResponse, *exceptions.ApiError[string]) {
 	s.logger.InfoContext(ctx, "attemping to get professional users")
 
 	professionals, err := s.repository.GetProfessionalUsers(ctx)
@@ -246,4 +246,21 @@ func (s *userService) GetProfessionals(ctx context.Context) ([]*common.Professio
 	}
 
 	return professionals, nil
+}
+
+func (s *userService) GetProfessionalByID(ctx context.Context, ID string) (*common.GetProfessionalByIDResponse, *exceptions.ApiError[string]) {
+	s.logger.InfoContext(ctx, "attemping to get professional user by ID", "id", ID)
+
+	professional, err := s.repository.GetProfessionalByID(ctx, ID)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "error while attempting to get professional user", "err", err)
+		return nil, exceptions.MakeGenericApiError()
+	}
+
+	if professional == nil {
+		s.logger.WarnContext(ctx, "professional user not found")
+		return nil, nil
+	}
+
+	return professional, nil
 }

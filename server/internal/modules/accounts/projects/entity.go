@@ -1,4 +1,4 @@
-package services
+package projects
 
 import (
 	"conecta-mare-server/internal/database/models"
@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type Service struct {
+type Project struct {
 	id            string
 	userProfileID string
 	name          string
@@ -15,28 +15,28 @@ type Service struct {
 }
 
 func New(
-	serviceID string,
+	porfolioID string,
 	userProfileID string,
 	name string,
 	description string,
-) (*Service, error) {
-	service := Service{
-		id:            serviceID,
+) (*Project, error) {
+	project := Project{
+		id:            porfolioID,
 		userProfileID: userProfileID,
 		name:          name,
 		description:   description,
 		createdAt:     time.Now(),
 	}
 
-	if err := service.validate(); err != nil {
+	if err := project.validate(); err != nil {
 		return nil, exceptions.MakeApiError(err)
 	}
 
-	return &service, nil
+	return &project, nil
 }
 
-func NewFromModel(m models.Service) *Service {
-	return &Service{
+func NewFromModel(m models.Project) *Project {
+	return &Project{
 		id:            m.ID,
 		userProfileID: m.UserProfileID,
 		name:          m.Name,
@@ -45,8 +45,8 @@ func NewFromModel(m models.Service) *Service {
 	}
 }
 
-func (s *Service) ToModel() models.Service {
-	return models.Service{
+func (s *Project) ToModel() models.Project {
+	return models.Project{
 		ID:            s.id,
 		UserProfileID: s.userProfileID,
 		Name:          s.name,
@@ -55,12 +55,12 @@ func (s *Service) ToModel() models.Service {
 	}
 }
 
-func (s *Service) validate() error {
+func (s *Project) validate() error {
 	return nil
 }
 
-func (s *Service) ID() string            { return s.id }
-func (s *Service) UserProfileID() string { return s.userProfileID }
-func (s *Service) Name() string          { return s.name }
-func (s *Service) Description() string   { return s.description }
-func (s *Service) CreatedAt() time.Time  { return s.createdAt }
+func (s *Project) ID() string            { return s.id }
+func (s *Project) UserProfileID() string { return s.userProfileID }
+func (s *Project) Name() string          { return s.name }
+func (s *Project) Description() string   { return s.description }
+func (s *Project) CreatedAt() time.Time  { return s.createdAt }

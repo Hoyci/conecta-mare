@@ -20,7 +20,8 @@ type (
 		CountBySubcategoryIDs(ctx context.Context, subcategoryIDs []string) (map[string]int, error)
 		// Update(ctx context.Context, user *User) (*User, error)
 		DeleteByID(ctx context.Context, ID string) error
-		GetProfessionalUsers(ctx context.Context) ([]*common.ProfessionalResponse, error)
+		GetProfessionalUsers(ctx context.Context) ([]*common.GetProfessionalsResponse, error)
+		GetProfessionalByID(ctx context.Context, ID string) (*common.GetProfessionalByIDResponse, error)
 	}
 	UsersService interface {
 		Login(ctx context.Context, input common.LoginUserRequest) (*common.LoginUserResponse, *exceptions.ApiError[string])
@@ -32,7 +33,8 @@ type (
 		GetByEmail(ctx context.Context, email string) (*User, error)
 		// Updated(ctx context.Context common.)
 		DeleteByID(ctx context.Context, ID string) error
-		GetProfessionals(ctx context.Context) ([]*common.ProfessionalResponse, *exceptions.ApiError[string])
+		GetProfessionals(ctx context.Context) ([]*common.GetProfessionalsResponse, *exceptions.ApiError[string])
+		GetProfessionalByID(ctx context.Context, ID string) (*common.GetProfessionalByIDResponse, *exceptions.ApiError[string])
 	}
 	userService struct {
 		repository     UsersRepository
