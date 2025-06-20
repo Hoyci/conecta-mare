@@ -30,18 +30,30 @@ export function toCamelCase(obj: Record<string, any>): Record<string, any> {
   return Object.entries(obj).reduce(
     (acc, [key, value]) => {
       const camelKey = camelCase(key);
-      if (
+
+      if (Array.isArray(value)) {
+        acc[camelKey] = value.map((item) =>
+          typeof item === "object" && item !== null ? toCamelCase(item) : item,
+        );
+      } else if (
         value &&
         typeof value === "object" &&
-        !Array.isArray(value) &&
         !(value instanceof Date)
       ) {
         acc[camelKey] = toCamelCase(value);
       } else {
         acc[camelKey] = value;
       }
+
       return acc;
     },
     {} as Record<string, any>,
   );
+}
+
+export function formatCentsToBRL(cents: number): string {
+  return (cents / 100).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
 }

@@ -52,7 +52,7 @@ const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
       </div>
 
       <ProfessionalModal
-        professional={professional}
+        userID={professional.userId}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />

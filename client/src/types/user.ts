@@ -32,7 +32,7 @@ export const UserProfileSchema = z.object({
   updatedAt: z.date().optional(),
 });
 
-export const UserService = z.object({
+export const UserProject = z.object({
   id: z.string(),
   userProfileId: z.string(),
   name: z.string(),
@@ -49,7 +49,7 @@ export const UserService = z.object({
 export const UserCertification = z.object({
   id: z.string(),
   userProfileId: z.string(),
-  instituition: z.string(),
+  institution: z.string(),
   courseName: z.string(),
   startDate: z.date(),
   endDate: z.date().optional(),
@@ -100,12 +100,16 @@ export const ProfessionalUserSchema = z.object({
   subcategoryName: SubcategorySchema.shape.name,
   rating: z.number(),
   location: z.string(),
-  services: z.array(UserService),
+  projects: z.array(UserProject),
   certifications: z.array(UserCertification),
 });
 
 export const ProfessilnaUsersResponseSchema = z.object({
   professionals: z.array(ProfessionalUserSchema),
+});
+
+export const ProfessionalUserResponseSchema = z.object({
+  data: ProfessionalUserSchema,
 });
 
 export type User = z.infer<typeof UserSchema>;
@@ -115,3 +119,8 @@ export type ProfessionalUser = z.infer<typeof ProfessionalUserSchema>;
 export type ProfessionalUsersResponse = z.infer<
   typeof ProfessilnaUsersResponseSchema
 >;
+export type ProfessionalUserResponse = z.infer<
+  typeof ProfessionalUserResponseSchema
+>;
+
+export type ProjectValues = z.infer<typeof UserProject>;
