@@ -113,9 +113,9 @@ func (s *userService) Login(ctx context.Context, input common.LoginUserRequest) 
 	user := NewFromModel(*existingUser)
 
 	s.logger.InfoContext(ctx, "user found, attempting to verify password", "email", user.Email())
-	if !security.PasswordMatches(input.Password, user.PasswordHash()) {
+	if ok := security.PasswordMatches(input.Password, user.PasswordHash()); !ok {
 		s.logger.ErrorContext(ctx, "unauthorized attempt to login", "email", input.Email)
-		return nil, exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, exceptions.ErrInvalidLoginAttempt)
+		return nil, exceptions.MakeApiErrorWithStatus(http.StatusUnauthorized, exceptions.ErrInvalidLoginAttempt)
 	}
 
 	err = s.sessionService.DeactivateAllSessions(ctx, user.ID())

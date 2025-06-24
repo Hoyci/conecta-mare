@@ -8,6 +8,7 @@ import (
 	"conecta-mare-server/pkg/jwt"
 	"conecta-mare-server/pkg/security"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -103,7 +104,9 @@ func (h userHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 	response, loginErr := h.usersService.Login(ctx, common.LoginUserRequest{Email: body.Email, Password: body.Password})
 	if loginErr != nil {
-		httphelpers.WriteJSON(w, loginErr.Code, loginErr.Err)
+		fmt.Println(loginErr)
+		httphelpers.WriteJSON(w, loginErr.Code, loginErr)
+		return
 	}
 
 	http.SetCookie(w, &http.Cookie{
