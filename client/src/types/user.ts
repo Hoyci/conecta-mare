@@ -61,25 +61,12 @@ export const SignupSchema = z
     email: z.string().min(1, "E-mail é obrigatório").email("E-mail inválido"),
     password: z.string().min(8, "Senha deve ter no mínimo 8 caracteres"),
     confirmPassword: z.string(),
-    subcategoryId: z.string().optional(),
-    userRole: z.string(),
-    picture: z
-      .any()
-      .refine((fileList) => fileList.length > 0, "A foto é obrigatória"),
+    role: rolesEnumSchema,
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "As senhas não conferem",
     path: ["confirmPassword"],
-  })
-  .refine(
-    (data) =>
-      data.userRole === "client" ||
-      (data.userRole === "professional" && !!data.subcategoryId),
-    {
-      message: "Selecione sua especialidade",
-      path: ["subcategoryId"],
-    },
-  );
+  });
 
 export const LoginSchema = z.object({
   email: z.string().min(1, "E-mail é obrigatório").email("E-mail inválido"),
@@ -111,7 +98,6 @@ export const ProfessilnaUsersResponseSchema = z.object({
 export const ProfessionalUserResponseSchema = z.object({
   data: ProfessionalUserSchema,
 });
-
 export type User = z.infer<typeof UserSchema>;
 export type SignUpValues = z.infer<typeof SignupSchema>;
 export type LoginValues = z.infer<typeof LoginSchema>;

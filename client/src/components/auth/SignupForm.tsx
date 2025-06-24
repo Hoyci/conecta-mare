@@ -3,22 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Mail, Lock, Award } from "lucide-react";
+import { User, Mail, Lock } from "lucide-react";
 
 import { Controller, FormProvider } from "react-hook-form";
 
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
 import { useSignUpForm } from "@/hooks/useSignUpForm";
 import { SignUpValues } from "@/types/user";
-import ProfilePhotoUpload from "../ui/profile-photo-upload";
 
 const SignupForm = () => {
   const {
@@ -26,37 +16,19 @@ const SignupForm = () => {
     handleSubmit,
     register,
     errors,
-    setValue,
     isValid,
     mutate,
     isSignUpPending,
-    categories,
-    isCategoriesLoading,
-    userRole,
     passwordRequirements,
   } = useSignUpForm();
 
   const { watch } = methods;
 
-  const [password, picture] = watch(["password", "picture"]);
-
-  console.log("errors", errors);
-  console.log("isValid", isValid);
-  console.log("formState", methods.formState);
+  const [password] = watch(["password"]);
 
   const onSubmit = (data: SignUpValues) => {
-    const formData = new FormData();
-    formData.append("name", data.name);
-    formData.append("email", data.email);
-    if (userRole !== "client") {
-      formData.append("subcategory_id", data.subcategoryId);
-    }
-    formData.append("password", data.password);
-    formData.append("confirm_password", data.confirmPassword);
-    formData.append("user_role", data.userRole);
-    formData.append("picture", data.picture[0]);
-
-    mutate(formData);
+    console.log(data);
+    mutate(data);
   };
 
   return (
@@ -74,7 +46,7 @@ const SignupForm = () => {
       <FormProvider {...methods}>
         <Controller
           control={methods.control}
-          name="userRole"
+          name="role"
           defaultValue="client"
           render={({ field }) => (
             <Tabs
@@ -89,12 +61,6 @@ const SignupForm = () => {
           )}
         />
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <ProfilePhotoUpload
-            value={picture as File[]}
-            onChange={(files) =>
-              setValue("picture", files, { shouldValidate: true })
-            }
-          />
           <div className="space-y-2">
             <Label htmlFor="fullName">Nome</Label>
             <div className="relative">
@@ -135,52 +101,6 @@ const SignupForm = () => {
               </p>
             )}
           </div>
-
-          {userRole !== "client" && (
-            <div className="space-y-2">
-              <Label htmlFor="occupation">Especialidade</Label>
-              <Controller
-                control={methods.control}
-                name="subcategoryId"
-                defaultValue=""
-                render={({ field }) => (
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    disabled={isCategoriesLoading}
-                  >
-                    <SelectTrigger className="data-[placeholder]:text-gray-400">
-                      <Award size={18} className="text-gray-400 shrink-0" />
-                      <SelectValue
-                        placeholder="Selecione sua especialidade"
-                        className="truncate"
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories?.map((category) => (
-                        <SelectGroup key={category.id}>
-                          <SelectLabel>{`${category.name} ${category.icon}`}</SelectLabel>
-                          {category.subs.map((subcategory) => (
-                            <SelectItem
-                              key={subcategory.id}
-                              value={subcategory.id}
-                            >
-                              {subcategory.name}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {errors.subcategoryId && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.subcategoryId.message}
-                </p>
-              )}
-            </div>
-          )}
 
           <div className="space-y-2">
             <Label htmlFor="password">Senha</Label>
@@ -271,7 +191,7 @@ const SignupForm = () => {
 
       <div className="mt-6 text-center">
         <p className="text-sm text-gray-600">
-          Já tem uma conta?{" "}
+          Já tem uma conta?
           <Link
             to="/login"
             className="text-conecta-blue font-medium hover:underline"

@@ -23,7 +23,7 @@ const createAuthStore = (storage: Storage, name: string) =>
         accessToken: null,
         login: (session: Session) => {
           const decodedUser = jwtDecode<UserPayload>(session.access_token);
-          const user = toCamelCase(decodedUser.user);
+          const user = toCamelCase(decodedUser);
 
           set({
             user,

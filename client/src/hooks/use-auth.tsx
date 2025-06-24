@@ -4,7 +4,7 @@ import { getCurrentAuthStore } from "@/store/auth-store-utils";
 import { Session } from "@/types/auth";
 
 export const useAuth = () => {
-  const store = getCurrentAuthStore()
+  const store = getCurrentAuthStore();
 
   const login = (session: Session, rememberMe: boolean) => {
     if (rememberMe) {

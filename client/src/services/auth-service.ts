@@ -1,10 +1,11 @@
 import { env } from "@/config/env";
 import { RenewAccessTokenResponse, Session } from "@/types/auth";
 import { authFetch } from "@/lib/auth-fetch";
-import { User } from "@/types/user";
+import { SignUpValues, User } from "@/types/user";
+import { toSnakeCase } from "@/lib/utils";
 
 export const loginUser = async (email: string, password: string) => {
-  const apiUrl = `${env.data.VITE_API_URL}/api/v1/auth/login`;
+  const apiUrl = `${env.data.VITE_API_URL}/api/v1/users/login`;
 
   const res = await fetch(apiUrl, {
     method: "POST",
@@ -20,16 +21,16 @@ export const loginUser = async (email: string, password: string) => {
     throw new Error(errorData);
   }
 
-  const user = await res.json();
-  return user as Session;
+  const session = await res.json();
+  return session as Session;
 };
 
-export const signUpUser = async (payload: FormData) => {
+export const signUpUser = async (payload: SignUpValues) => {
   const apiUrl = `${env.data.VITE_API_URL}/api/v1/users/register`;
 
   const res = await fetch(apiUrl, {
     method: "POST",
-    body: payload,
+    body: JSON.stringify(toSnakeCase(payload)),
   });
 
   if (!res.ok) {
@@ -42,7 +43,7 @@ export const signUpUser = async (payload: FormData) => {
 };
 
 export const logoutUser = async () => {
-  const apiUrl = `${env.data.VITE_API_URL}/api/v1/auth/logout`;
+  const apiUrl = `${env.data.VITE_API_URL}/api/v1/users/logout`;
 
   const res = await authFetch(apiUrl, {
     method: "PATCH",

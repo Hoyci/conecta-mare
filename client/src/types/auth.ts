@@ -9,11 +9,10 @@ export type UserPayload = {
 };
 
 export type Session = {
-  session_id: string;
   access_token: string;
   refresh_token: string;
 };
 
 export type RenewAccessTokenResponse = {
   access_token: string;
-}
+};
