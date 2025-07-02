@@ -22,7 +22,7 @@ export const CategoryWithUserCountResponseSchema = z.object({
 });
 
 export const CategoryWithSubs = CategorySchema.extend({
-  subs: z.array(SubcategorySchema),
+  subcategories: z.array(SubcategorySchema),
 });
 
 export const CategoryWithSubsResponseSchema = z.object({

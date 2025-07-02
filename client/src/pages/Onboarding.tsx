@@ -1,3 +1,4 @@
+import React from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
@@ -11,6 +12,7 @@ import { ProfessionalProfile, ProfessionalProfileSchema } from "@/types/user";
 import { UserDataStep } from "@/components/onboarding/UserDataStep";
 import { ProjectStep } from "@/components/onboarding/ProjectStep";
 import ServicesStep from "@/components/onboarding/ServicesStep";
+import CertificationsStep from "@/components/onboarding/CertificationsStep";
 
 const steps = [
   {
@@ -25,7 +27,7 @@ const steps = [
     subtitle: "Descreva suas certificações para transmitir confiança",
     indicatorTitle: "Certificações",
     indicatorSubtitle: "Suas certificações",
-    component: <div>Certificados</div>,
+    component: <CertificationsStep />,
   },
   {
     title: "Mostre seus Projetos",
@@ -191,7 +193,7 @@ const StepIndicator = ({ currentStep, steps }: StepIndicatorProps) => {
         const isActive = currentStep >= stepNumber;
 
         return (
-          <>
+          <React.Fragment key={step.indicatorTitle}>
             <div className="flex items-center gap-3">
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
@@ -215,7 +217,7 @@ const StepIndicator = ({ currentStep, steps }: StepIndicatorProps) => {
             {stepNumber !== steps.length && (
               <div className="flex-1 h-px bg-gray-300 max-w-20"></div>
             )}
-          </>
+          </React.Fragment>
         );
       })}
     </div>

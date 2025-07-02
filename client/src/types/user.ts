@@ -10,6 +10,7 @@ export const MAX_PROJECTS = 3;
 export const MAX_PROJECT_IMAGES = 3;
 export const MAX_SERVICES = 3;
 export const MAX_SERVICE_IMAGES = 1;
+export const MAX_JOB_DESCRIPTION_CHARS = 80;
 
 // ======================
 // Schemas Base
@@ -26,7 +27,7 @@ const BaseUserSchema = z.object({
 const SocialLinksSchema = z
   .object({
     instagram: z.string().url().optional(),
-    linkedin: z.string().url().optional(),
+    linkedin: z.string().url("Insira uma URL válida"),
   })
   .optional();
 
@@ -36,8 +37,8 @@ const SocialLinksSchema = z
 export const UserProfileSchema = BaseUserSchema.extend({
   fullName: z.string().min(2),
   profileImage: z.union([z.string().url(), z.instanceof(FileList)]).optional(),
-  jobDescription: z.string(),
-  phone: z.string().min(10),
+  jobDescription: z.string().max(MAX_JOB_DESCRIPTION_CHARS),
+  phone: z.string().min(14, "Telefone inválido"),
   socialLinks: SocialLinksSchema,
 });
 
@@ -112,6 +113,7 @@ export const LoginSchema = AuthSchema.extend({
 // Schemas de Resposta
 // ======================
 export const ProfessionalProfileSchema = UserProfileSchema.extend({
+  subcategoryID: z.string(),
   rating: z.number().min(0).max(5),
   hasOwnLocation: z.boolean(),
   location: LocationSchema,

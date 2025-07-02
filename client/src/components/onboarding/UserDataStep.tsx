@@ -4,21 +4,36 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Plus, Upload } from "lucide-react";
-import { MAX_CERTIFICATIONS, ProfessionalProfile } from "@/types/user";
-import { useFieldArray, useFormContext } from "react-hook-form";
+import { Upload, User } from "lucide-react";
+import { MAX_JOB_DESCRIPTION_CHARS, ProfessionalProfile } from "@/types/user";
+import { useFormContext } from "react-hook-form";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
+import { MaskedInput } from "../ui/masked-input";
+import { useQuery } from "@tanstack/react-query";
+import { getCategoriesWithSubs } from "@/services/categories-service";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { CategoryWithSubsResponse } from "@/types/categories";
 
 export const UserDataStep = () => {
   const {
     register,
+    setValue,
     formState: { errors },
     watch,
   } = useFormContext<ProfessionalProfile>();
 
-  const { fields, append, remove } = useFieldArray<ProfessionalProfile>({
-    name: "certifications",
+  const { data, isLoading } = useQuery<CategoryWithSubsResponse>({
+    queryKey: ["categoriesWithSubs"],
+    queryFn: getCategoriesWithSubs,
   });
 
   const profileImage = watch("profileImage") as FileList | null;
@@ -35,7 +50,12 @@ export const UserDataStep = () => {
     setImageUrl(null);
   }, [profileImage]);
 
-  console.log(fields);
+  const [jobDescription, phone, instagram, subcategoryID] = watch([
+    "jobDescription",
+    "phone",
+    "socialLinks.instagram",
+    "subcategoryID",
+  ]);
 
   return (
     <div className="space-y-6">
@@ -48,7 +68,7 @@ export const UserDataStep = () => {
                   <AvatarImage src={imageUrl} alt="Profile" />
                 ) : (
                   <AvatarFallback className="bg-conecta-gray text-gray-600 text-2xl">
-                    <Upload className="w-8 h-8" />
+                    <User className="w-8 h-8" />
                   </AvatarFallback>
                 )}
               </Avatar>
@@ -69,7 +89,9 @@ export const UserDataStep = () => {
               </label>
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-lg mb-2">Foto de Perfil</h3>
+              <h3 className="font-semibold text-lg mb-2 text-gray-800">
+                Foto de Perfil
+              </h3>
               <p className="text-gray-600 text-sm">
                 Adicione uma foto profissional que represente bem você e seu
                 trabalho. Formatos aceitos: JPG, PNG (máx. 5MB)
@@ -82,6 +104,7 @@ export const UserDataStep = () => {
         <Label htmlFor="description">Descrição sobre você *</Label>
         <Textarea
           id="description"
+          maxLength={MAX_JOB_DESCRIPTION_CHARS}
           placeholder="Padeiro da padaria mais famosa da maré..."
           {...register("jobDescription")}
           className={cn(
@@ -89,6 +112,9 @@ export const UserDataStep = () => {
             errors.jobDescription && "border-red-500",
           )}
         />
+        <div className="text-xs text-gray-500 text-right">
+          {jobDescription.length}/{MAX_JOB_DESCRIPTION_CHARS} caracteres
+        </div>
         {errors.jobDescription && (
           <p className="text-red-500 text-xs mt-1">
             {errors.jobDescription.message}
@@ -96,11 +122,59 @@ export const UserDataStep = () => {
         )}
       </div>
       <div className="space-y-2">
+        <Label htmlFor="subcategory">Categoria *</Label>
+
+        <Select
+          value={subcategoryID || ""}
+          onValueChange={(value) => setValue("subcategoryID", value)}
+        >
+          <SelectTrigger
+            id="subcategory"
+            aria-invalid={!!errors.subcategoryID}
+            disabled={isLoading}
+          >
+            <SelectValue
+              placeholder={
+                isLoading ? "Carregando..." : "Selecione uma categoria"
+              }
+            />
+          </SelectTrigger>
+
+          <SelectContent>
+            {isLoading ? (
+              <SelectItem value="loading" disabled>
+                Carregando...
+              </SelectItem>
+            ) : (
+              data?.categories.map((category) => (
+                <SelectGroup key={category.id}>
+                  <SelectLabel>{`${category.icon} ${category.name}`}</SelectLabel>
+                  {category.subcategories.map((subcat) => (
+                    <SelectItem key={subcat.id} value={subcat.id}>
+                      {subcat.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              ))
+            )}
+          </SelectContent>
+        </Select>
+
+        {errors.subcategoryID && (
+          <p className="text-red-500 text-xs mt-1">
+            {errors.subcategoryID.message}
+          </p>
+        )}
+      </div>
+      <div className="space-y-2">
         <Label htmlFor="phone">Telefone de contato *</Label>
-        <Input
+        <MaskedInput
           id="phone"
-          placeholder="(21) 99999-9999"
-          {...register("phone")}
+          mask="(99) 99999-9999"
+          value={phone}
+          onChange={(e) => setValue("phone", e.target.value)}
+          onBlur={(e) => setValue("phone", e.target.value)}
+          placeholder="(21) 98765-4321"
           className={errors.phone && "border-red-500"}
         />
         {errors.phone && (
@@ -111,8 +185,20 @@ export const UserDataStep = () => {
         <Label htmlFor="socialMedia.instagram">Instagram</Label>
         <Input
           id="socialMedia.instagram"
+          value={instagram}
+          onChange={(e) => setValue("socialLinks.instagram", e.target.value)}
+          onFocus={(e) => {
+            if (e.target.value === "") {
+              setValue("socialLinks.instagram", "@");
+            }
+          }}
+          onBlur={(e) => {
+            if (e.target.value === "@") {
+              setValue("socialLinks.instagram", "");
+            }
+          }}
           placeholder="@seuinstagram"
-          {...register("socialLinks.instagram")}
+          className={errors.socialLinks?.instagram && "border-red-500"}
         />
         {errors.socialLinks?.instagram && (
           <p className="text-red-500 text-xs mt-1">
@@ -133,89 +219,6 @@ export const UserDataStep = () => {
           </p>
         )}
       </div>
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <Label>Certificações</Label>
-          <Button
-            type="button"
-            disabled={fields.length >= MAX_CERTIFICATIONS}
-            onClick={() =>
-              append({
-                institution: "",
-                courseName: "",
-                startDate: null,
-                endDate: null,
-              })
-            }
-            variant="outline"
-            size="sm"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Adicionar Certificação
-          </Button>
-        </div>
-      </div>
-      {fields.map((field, index) => (
-        <Card
-          key={field.id}
-          className="border-2 border-conecta-blue/20 space-y-4 p-4"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor={`certifications.${index}.institution`}>
-                Instituição *
-              </Label>
-              <Input
-                id={`certifications.${index}.institution`}
-                placeholder="Nome da instituição"
-                {...register(`certifications.${index}.institution`)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor={`certifications.${index}.courseName`}>
-                Nome do Curso *
-              </Label>
-              <Input
-                id={`certifications.${index}.courseName`}
-                placeholder="Nome do curso/certificação"
-                {...register(`certifications.${index}.courseName`)}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor={`certifications.${index}.startDate`}>
-                Data de Início *
-              </Label>
-              <Input
-                id={`certifications.${index}.startDate`}
-                type="date"
-                {...register(`certifications.${index}.startDate`)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor={`certifications.${index}.endDate`}>
-                Data de Fim (opcional)
-              </Label>
-              <Input
-                id={`certifications.${index}.endDate`}
-                type="date"
-                {...register(`certifications.${index}.endDate`)}
-              />
-            </div>
-          </div>
-          <div className="flex justify-end pt-2">
-            <Button
-              type="button"
-              variant="ghost"
-              className="text-red-500"
-              onClick={() => remove(index)}
-            >
-              Remover
-            </Button>
-          </div>
-        </Card>
-      ))}
     </div>
   );
 };

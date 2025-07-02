@@ -91,7 +91,7 @@ const ServicesStep = () => {
       )}
 
       <div className="flex justify-between items-center">
-        <Label className="text-base">Serviços</Label>
+        <Label className="text-base text-gray-800">Serviços</Label>
         <Button
           type="button"
           disabled={services.length === MAX_SERVICES}
@@ -146,16 +146,6 @@ const ServicesStep = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label>Valor do serviço a domicílio</Label>
-              <Input
-                type="number"
-                min="0"
-                {...register(`services.${index}.price`)}
-                placeholder="R$"
-              />
-            </div>
-
             {hasOwnLocation && (
               <div>
                 <Label>Valor do serviço no local próprio</Label>
@@ -167,6 +157,15 @@ const ServicesStep = () => {
                 />
               </div>
             )}
+            <div>
+              <Label>Valor do serviço a domicílio</Label>
+              <Input
+                type="number"
+                min="0"
+                {...register(`services.${index}.price`)}
+                placeholder="R$"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">

@@ -47,7 +47,7 @@ export const ProjectStep = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <Label className="text-base">Projetos</Label>
+        <Label className="text-base text-gray-800">Projetos</Label>
         <Button
           type="button"
           disabled={projects.length === MAX_PROJECT_IMAGES}
