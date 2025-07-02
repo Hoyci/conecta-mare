@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +10,7 @@ import Professionals from "./pages/Professionals";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import PrivateRoute from "./pages/PrivateRoute";
+import Onboarding from "./pages/Onboarding";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +25,7 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/professionals" element={<Professionals />} />
+          <Route path="/onboarding" element={<Onboarding />} />
           <Route
             path="/dashboard"
             element={

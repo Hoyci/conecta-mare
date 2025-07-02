@@ -86,6 +86,7 @@ func main() {
 		cfg.StorageAccessKey,
 		cfg.StorageSecretKey,
 		cfg.StorageBucketName,
+    cfg.Environment,
 	)
 
 	tokenProvider := jwt.NewProvider(cfg.JWTAccessKey, cfg.JWTRefreshKey)

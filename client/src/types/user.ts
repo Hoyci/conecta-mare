@@ -1,112 +1,135 @@
 import { z } from "zod";
-import { CategorySchema, SubcategorySchema } from "./categories";
 
-const rolesValues = ["client", "professional"] as const;
+// ======================
+// Constantes Compartilhadas
+// ======================
+const ROLES = ["client", "professional"] as const;
+const DATE_SCHEMA = z.date().nullable();
+export const MAX_CERTIFICATIONS = 5;
+export const MAX_PROJECTS = 3;
+export const MAX_PROJECT_IMAGES = 3;
+export const MAX_SERVICES = 3;
+export const MAX_SERVICE_IMAGES = 1;
 
-const rolesEnumSchema = z.enum(rolesValues);
-
-export const UserSchema = z.object({
+// ======================
+// Schemas Base
+// ======================
+const BaseUserSchema = z.object({
   id: z.string(),
   email: z.string().email(),
-  role: rolesEnumSchema,
+  role: z.enum(ROLES),
   createdAt: z.date(),
-  updatesdAt: z.date().nullable(),
-  deletedAt: z.date().nullable(),
+  updatedAt: DATE_SCHEMA,
+  deletedAt: DATE_SCHEMA,
 });
 
-export const UserProfileSchema = z.object({
-  id: z.string(),
-  userId: z.string(),
-  fullName: z.string(),
-  categoryId: z.string(),
-  subcategoryId: z.string(),
-  profileImage: z.string().url(),
+const SocialLinksSchema = z
+  .object({
+    instagram: z.string().url().optional(),
+    linkedin: z.string().url().optional(),
+  })
+  .optional();
+
+// ======================
+// Schemas Principais
+// ======================
+export const UserProfileSchema = BaseUserSchema.extend({
+  fullName: z.string().min(2),
+  profileImage: z.union([z.string().url(), z.instanceof(FileList)]).optional(),
   jobDescription: z.string(),
-  phone: z.string(),
-  socialLinks: z.object({
-    github: z.string().optional(),
-    instagram: z.string().optional(),
-    linkedin: z.string().optional(),
-  }),
-  createdAt: z.date(),
-  updatedAt: z.date().optional(),
+  phone: z.string().min(10),
+  socialLinks: SocialLinksSchema,
 });
 
-export const UserProject = z.object({
-  id: z.string(),
-  userProfileId: z.string(),
+// ======================
+// Schemas de Projetos e Certificações
+// ======================
+export const ProjectImageSchema = z.object({
+  id: z.string().optional(),
+  url: z.string().url(),
+  ordering: z.number(),
+  file: z.instanceof(File).optional(),
+});
+
+export const ProjectSchema = z.object({
+  id: z.string().optional(),
   name: z.string(),
   description: z.string(),
-  images: z.array(
-    z.object({
-      id: z.string(),
-      url: z.string(),
-      ordering: z.number(),
-    }),
-  ),
+  images: z.array(ProjectImageSchema).max(MAX_PROJECT_IMAGES),
 });
 
-export const UserCertification = z.object({
-  id: z.string(),
-  userProfileId: z.string(),
-  institution: z.string(),
-  courseName: z.string(),
-  startDate: z.date(),
-  endDate: z.date().optional(),
+export const CertificationSchema = z.object({
+  id: z.string().optional(),
+  institution: z.string().min(3),
+  courseName: z.string().min(3),
+  startDate: z.coerce.date().nullable(),
+  endDate: z.coerce.date().optional().nullable(),
 });
 
-export const SignupSchema = z
-  .object({
-    name: z.string().min(1, "Nome é obrigatório"),
-    email: z.string().min(1, "E-mail é obrigatório").email("E-mail inválido"),
-    password: z.string().min(8, "Senha deve ter no mínimo 8 caracteres"),
-    confirmPassword: z.string(),
-    role: rolesEnumSchema,
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "As senhas não conferem",
-    path: ["confirmPassword"],
-  });
-
-export const LoginSchema = z.object({
-  email: z.string().min(1, "E-mail é obrigatório").email("E-mail inválido"),
-  password: z.string().min(8, "Senha deve ter no mínimo 8 caracteres"),
-  rememberMe: z.coerce.boolean().default(false),
+export const ServiceImageSchema = z.object({
+  id: z.string().optional(),
+  url: z.string().url(),
+  file: z.instanceof(File).optional(),
 });
 
-export const ProfessionalUserSchema = z.object({
-  userId: UserSchema.shape.id,
-  email: UserSchema.shape.email,
-  role: UserSchema.shape.role,
-  fullName: UserProfileSchema.shape.fullName,
-  profileImage: UserProfileSchema.shape.profileImage,
-  jobDescription: UserProfileSchema.shape.jobDescription,
-  phone: UserProfileSchema.shape.phone,
-  socialLinks: UserProfileSchema.shape.socialLinks,
-  categoryName: CategorySchema.shape.name,
-  subcategoryName: SubcategorySchema.shape.name,
-  rating: z.number(),
-  location: z.string(),
-  projects: z.array(UserProject),
-  certifications: z.array(UserCertification),
+export const ServiceSchema = z.object({
+  name: z.string(),
+  description: z.string(),
+  price: z.number(),
+  ownLocationPrice: z.number().optional(),
+  images: z.array(ServiceImageSchema).max(MAX_SERVICE_IMAGES),
 });
 
-export const ProfessilnaUsersResponseSchema = z.object({
-  professionals: z.array(ProfessionalUserSchema),
+export const LocationSchema = z.object({
+  street: z.string(),
+  number: z.string(),
+  complement: z.string(),
+  neighborhood: z.string(),
 });
 
-export const ProfessionalUserResponseSchema = z.object({
-  data: ProfessionalUserSchema,
+// ======================
+// Schemas de Autenticação
+// ======================
+export const AuthSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
 });
-export type User = z.infer<typeof UserSchema>;
+
+export const SignupSchema = AuthSchema.extend({
+  name: z.string().min(2),
+  confirmPassword: z.string(),
+  role: z.enum(ROLES),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "As senhas não coincidem",
+  path: ["confirmPassword"],
+});
+
+export const LoginSchema = AuthSchema.extend({
+  rememberMe: z.boolean().default(false),
+});
+
+// ======================
+// Schemas de Resposta
+// ======================
+export const ProfessionalProfileSchema = UserProfileSchema.extend({
+  rating: z.number().min(0).max(5),
+  hasOwnLocation: z.boolean(),
+  location: LocationSchema,
+  projects: z.array(ProjectSchema).max(MAX_PROJECTS),
+  certifications: z.array(CertificationSchema).max(MAX_CERTIFICATIONS),
+  services: z.array(ServiceSchema).max(MAX_SERVICES),
+});
+
+// ======================
+// Tipos Exportados
+// ======================
+export type User = z.infer<typeof BaseUserSchema>;
+export type UserProfile = z.infer<typeof UserProfileSchema>;
+export type ProjectImage = z.infer<typeof ProjectImageSchema>;
+export type Project = z.infer<typeof ProjectSchema>;
+export type Certification = z.infer<typeof CertificationSchema>;
+export type Service = z.infer<typeof ServiceSchema>;
+export type ServiceImage = z.infer<typeof ServiceImageSchema>;
 export type SignUpValues = z.infer<typeof SignupSchema>;
 export type LoginValues = z.infer<typeof LoginSchema>;
-export type ProfessionalUser = z.infer<typeof ProfessionalUserSchema>;
-export type ProfessionalUsersResponse = z.infer<
-  typeof ProfessilnaUsersResponseSchema
->;
-export type ProfessionalUserResponse = z.infer<
-  typeof ProfessionalUserResponseSchema
->;
-
-export type ProjectValues = z.infer<typeof UserProject>;
+export type ProfessionalProfile = z.infer<typeof ProfessionalProfileSchema>;
