@@ -13,7 +13,7 @@ var (
 )
 
 type Config struct {
-	Port        int    `mapstructure:"PORT"`
+	Port        int    `mapstructure:"APP_PORT"`
 	Environment string `mapstructure:"APP_ENV"`
 	AppName     string `mapstructure:"APP_NAME"`
 	DebugMode   bool   `mapstructure:"DEBUG"`

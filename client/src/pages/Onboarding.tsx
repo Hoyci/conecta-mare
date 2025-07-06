@@ -51,8 +51,10 @@ const Onboarding = () => {
 
   const methods = useForm<ProfessionalProfile>({
     resolver: zodResolver(ProfessionalProfileSchema),
+    mode: "all",
     defaultValues: {
       jobDescription: "",
+      profileImage: undefined,
       phone: "",
       socialLinks: {
         instagram: "",
@@ -60,15 +62,81 @@ const Onboarding = () => {
       },
       certifications: [],
       projects: [],
+      services: [],
+      hasOwnLocation: false,
+      location: {
+        street: "",
+        number: "",
+        complement: "",
+        neighborhood: "",
+      },
     },
   });
 
-  const onSubmit = (data: any) => {
-    console.log("Dados validados:", data);
+  const watchedFields = methods.watch();
+
+  const isStepValid = (step: number) => {
+    switch (step) {
+      case 1: {
+        const { profileImage, jobDescription, subcategoryID, phone } =
+          watchedFields;
+        const isPhoneValid = phone && phone.replace(/\D/g, "").length >= 10;
+
+        return (
+          profileImage &&
+          profileImage.length > 0 &&
+          jobDescription &&
+          subcategoryID &&
+          isPhoneValid
+        );
+      }
+      case 4: {
+        const { services, hasOwnLocation, location } = watchedFields;
+
+        if (!services || services.length === 0) {
+          return false;
+        }
+
+        const firstService = services[0];
+        const isServiceInfoFilled =
+          firstService.name &&
+          firstService.description &&
+          firstService.price > 0;
+
+        if (!isServiceInfoFilled) return false;
+
+        if (hasOwnLocation) {
+          const isLocationFilled =
+            location?.street && location?.number && location?.neighborhood;
+
+          const isOwnLocationPriceFilled =
+            firstService.ownLocationPrice && firstService.ownLocationPrice > 0;
+
+          return isLocationFilled && isOwnLocationPriceFilled;
+        }
+
+        return true;
+      }
+      default:
+        return true;
+    }
+  };
+
+  const onSubmit = (data: ProfessionalProfile) => {
+    if (!isStepValid(totalSteps)) {
+      console.error("Tentativa de submissão com o formulário inválido.");
+      return;
+    }
+    console.log("Dados validados e prontos para enviar:", data);
+    // navigate("/dashboard"); // ou para uma página de sucesso
+  };
+
+  const onInvalid = (errors: any) => {
+    console.error("Falha na validação do formulário:", errors);
   };
 
   const handleNext = () => {
-    if (currentStep < steps.length) {
+    if (isStepValid(currentStep) && currentStep < steps.length) {
       setCurrentStep((prev) => prev + 1);
     }
   };
@@ -82,6 +150,7 @@ const Onboarding = () => {
   const step = steps[currentStep - 1];
   const totalSteps = steps.length;
   const isLastStep = currentStep === totalSteps;
+  const isCurrentStepValid = isStepValid(currentStep);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-conecta-blue/5 to-conecta-green/5">
@@ -154,6 +223,7 @@ const Onboarding = () => {
               <Button
                 type="button"
                 onClick={handleNext}
+                disabled={!isCurrentStepValid}
                 className="bg-conecta-blue hover:bg-conecta-blue-dark px-8 py-2 shadow-md"
               >
                 Próximo Passo
@@ -161,6 +231,8 @@ const Onboarding = () => {
             ) : (
               <Button
                 type="submit"
+                onClick={methods.handleSubmit(onSubmit, onInvalid)}
+                disabled={!isCurrentStepValid}
                 className="bg-conecta-green hover:bg-conecta-green-dark px-8 py-2 shadow-md"
               >
                 <CheckCircle className="w-4 h-4 mr-2" />
