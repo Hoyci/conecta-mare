@@ -1,27 +1,6 @@
 services:
-  # app:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #     target: prod
-  #   restart: unless-stopped
-  #   ports:
-  #     - ${PORT}:${PORT}
-  #   environment:
-  #     APP_ENV: ${APP_ENV}
-  #     PORT: ${PORT}
-  #     DB_HOST: ${DB_HOST}
-  #     DB_PORT: ${DB_PORT}
-  #     DB_USERNAME: ${DB_USERNAME}
-  #     DB_PASSWORD: ${DB_PASSWORD}
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   networks:
-  #     - application-net
   postgres:
     image: postgres:latest
-    restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -38,7 +17,27 @@ services:
     networks:
       - application-net
 
+  localstack:
+    image: localstack/localstack:latest
+    container_name: localstack
+    ports:
+      - "4566:4566" 
+      - "4571:4571"
+    environment:
+      - SERVICES=s3
+      - DEBUG=1
+      - DATA_DIR=/tmp/localstack/data
+      - DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=${STORAGE_ACCESS_KEY}
+      - AWS_SECRET_ACCESS_KEY=${STORAGE_SECRET_KEY}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - application-net
+
 volumes:
   postgres_volume:
+
 networks:
   application-net:
+
