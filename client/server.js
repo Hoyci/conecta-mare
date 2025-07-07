@@ -3,8 +3,8 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import express from 'express'
 
-const isProduction = process.env.VITE_ENV === 'production'
-const port = process.env.VITE_PORT || 5173
+const isProduction = process.env.NODE_ENV === 'production'
+const port = process.env.VITE_PORT || 3000
 const base = process.env.BASE || '/'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -12,16 +12,24 @@ const resolve = (p) => path.resolve(__dirname, p)
 
 async function createServer() {
   const app = express()
-  const vite = await (
-    await import('vite')
-  ).createServer({
-    server: { middlewareMode: true },
-    appType: 'custom',
-    base,
-  })
+  let vite
 
   if (!isProduction) {
+    vite = await (
+      await import('vite')
+    ).createServer({
+      server: { middlewareMode: true },
+      appType: 'custom',
+      base,
+    })
     app.use(vite.middlewares)
+  } else {
+    app.use('/assets', express.static(resolve('dist/client/assets'), {
+      immutable: true, // Arquivos com hash podem ser cacheados para sempre
+      maxAge: '1y'
+    }))
+
+    app.use(express.static(resolve('dist/client'), { index: false }))
   }
 
   app.use('/{*splat}', async (req, res) => {
@@ -40,8 +48,8 @@ async function createServer() {
         render = (await import('./dist/server/entry-server.js')).render
       }
 
-      const appHtml = render(url)
-      const html = template.replace(`<!--ssr-outlet-->`, appHtml)
+      const appHtml = render(url) // Renderiza o componente React para HTML
+      const html = template.replace(`<!--ssr-outlet-->`, appHtml) // Injeta o HTML no template
 
       res.status(200).set({ 'Content-Type': 'text/html' }).end(html)
     } catch (e) {
