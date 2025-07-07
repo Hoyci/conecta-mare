@@ -24,7 +24,7 @@ import {
 import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar, Edit, StarIcon } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { startCase, camelCase } from "lodash";
+import { startCase, camelCase } from "lodash-es";
 
 const mockProfile = {
   name: "Juliana Silva",

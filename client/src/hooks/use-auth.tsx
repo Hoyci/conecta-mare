@@ -1,10 +1,26 @@
+import { useState, useEffect } from "react";
 import { useLocalAuthStore } from "@/store/auth";
 import { useSessionAuthStore } from "@/store/auth";
-import { getCurrentAuthStore } from "@/store/auth-store-utils";
+import type { AuthState } from "@/store/auth";
 import { Session } from "@/types/auth";
 
 export const useAuth = () => {
-  const store = getCurrentAuthStore();
+  const [store, setStore] = useState<AuthState | null>(null);
+
+  useEffect(() => {
+    import("@/store/auth-store-utils").then(({ getCurrentAuthStore }) => {
+      setStore(getCurrentAuthStore());
+    });
+  }, []);
+
+  if (!store) {
+    return {
+      user: null,
+      isAuthenticated: false,
+      login: () => { },
+      logout: () => { },
+    };
+  }
 
   const login = (session: Session, rememberMe: boolean) => {
     if (rememberMe) {

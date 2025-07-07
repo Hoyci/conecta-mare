@@ -84,7 +84,6 @@ const Onboarding = () => {
 
         return (
           profileImage &&
-          profileImage.length > 0 &&
           jobDescription &&
           subcategoryID &&
           isPhoneValid
@@ -268,11 +267,10 @@ const StepIndicator = ({ currentStep, steps }: StepIndicatorProps) => {
           <React.Fragment key={step.indicatorTitle}>
             <div className="flex items-center gap-3">
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
-                  isActive
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all ${isActive
                     ? "bg-conecta-blue text-white shadow-lg"
                     : "bg-gray-200 text-gray-600"
-                }`}
+                  }`}
               >
                 {isCompleted ? <CheckCircle className="w-5 h-5" /> : stepNumber}
               </div>

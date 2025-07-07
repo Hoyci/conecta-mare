@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const FileListClass = typeof FileList !== "undefined" ? FileList : class { };
+
 // ======================
 // Constantes Compartilhadas
 // ======================
@@ -36,7 +38,9 @@ const SocialLinksSchema = z
 // ======================
 export const UserProfileSchema = BaseUserSchema.extend({
   fullName: z.string().min(2),
-  profileImage: z.union([z.string().url(), z.instanceof(FileList)]).optional(),
+  profileImage: z
+    .union([z.string().url(), z.instanceof(FileListClass)])
+    .optional(),
   jobDescription: z.string().max(MAX_JOB_DESCRIPTION_CHARS),
   phone: z.string().min(14, "Telefone inválido"),
   socialLinks: SocialLinksSchema,

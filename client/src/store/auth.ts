@@ -5,7 +5,7 @@ import { Session, UserPayload } from "@/types/auth";
 import { jwtDecode } from "jwt-decode";
 import { toCamelCase } from "@/lib/utils.ts";
 
-type AuthState = {
+export type AuthState = {
   user: User | null;
   accessToken: string | null;
   isAuthenticated: boolean;
@@ -48,8 +48,27 @@ const createAuthStore = (storage: Storage, name: string) =>
     ),
   );
 
-export const useLocalAuthStore = createAuthStore(localStorage, "auth-local");
+
+const isBrowser = typeof window !== "undefined";
+
+const noopStorage: Storage = {
+  getItem: (_: string) => null,
+  setItem: (_: string, _value: string) => { },
+  removeItem: (_: string) => { },
+  clear: () => { },
+  key: (_index: number) => null,
+  length: 0,
+};
+
+const localStorageOrNoop = isBrowser ? window.localStorage : noopStorage;
+const sessionStorageOrNoop = isBrowser ? window.sessionStorage : noopStorage;
+
+export const useLocalAuthStore = createAuthStore(
+  localStorageOrNoop,
+  "auth-local",
+);
+
 export const useSessionAuthStore = createAuthStore(
-  sessionStorage,
+  sessionStorageOrNoop,
   "auth-session",
 );

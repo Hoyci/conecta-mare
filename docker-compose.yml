@@ -1,0 +1,116 @@
+services:
+  # --- Serviço do Banco de Dados ---
+  db:
+    image: postgres:15-alpine
+    container_name: conectamare-db
+    env_file:
+      - ./.env
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - conectamare-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- Serviço do S3 (LocalStack) ---
+  localstack:
+    image: localstack/localstack:latest
+    container_name: conectamare-localstack
+    env_file:
+      - ./.env
+    ports:
+      - "4566:4566"
+    volumes:
+      - localstack_data:/var/lib/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - conectamare-net
+
+  # --- SERVIÇO DE MIGRAÇÃO ---
+  migrate:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      # CORREÇÃO: Usa o estágio 'build' do Dockerfile, que contém o Go.
+      target: build
+    container_name: conectamare-migrate
+    env_file:
+      - ./.env
+    command: ["go", "run", "internal/database/migrate/migrate.go", "up"]
+    networks:
+      - conectamare-net
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # --- Serviço da API em Go (Backend) ---
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: conectamare-server
+    env_file:
+      - ./.env
+    volumes:
+      - ./.env:/app/.env:ro
+    networks:
+      - conectamare-net
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      localstack:
+        condition: service_started
+
+  # --- Serviço do Frontend (React SSR com Node.js) ---
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+    container_name: conectamare-client
+    env_file:
+      - ./.env
+    volumes:
+      - react-build:/app/dist/client
+    networks:
+      - conectamare-net
+    depends_on:
+      - server
+
+  # --- Serviço NGINX (Proxy Reverso e Servidor de Assets) ---
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    container_name: conectamare-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - react-build:/usr/share/nginx/html/client
+    networks:
+      - conectamare-net
+    depends_on:
+      - server
+      - client
+
+# Define a rede interna e privada
+networks:
+  conectamare-net:
+    driver: bridge
+
+# Define os volumes para persistência e para o build do React
+volumes:
+  postgres_data:
+  localstack_data:
+  react-build:
+
