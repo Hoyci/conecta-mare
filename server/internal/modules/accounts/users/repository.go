@@ -279,7 +279,5 @@ func (ur *usersRepository) GetProfessionalByID(ctx context.Context, ID string) (
 		Certifications:  certifications,
 	}
 
-	fmt.Println("professional", professional)
-
 	return professional, nil
 }

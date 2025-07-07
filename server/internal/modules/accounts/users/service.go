@@ -29,6 +29,7 @@ func NewService(
 		repository:     repository,
 		sessionService: sessionsService,
 		storageClient:  storageClient,
+		tokenProvider:  tokenProvider,
 		logger:         logger,
 	}
 }
@@ -130,7 +131,7 @@ func (s *userService) Login(ctx context.Context, input common.LoginUserRequest) 
 		return nil, exceptions.MakeGenericApiError()
 	}
 
-	refreshToken, claims, err := s.tokenProvider.GenerateAccessToken(user)
+	refreshToken, claims, err := s.tokenProvider.GenerateRefreshToken(user)
 	if err != nil {
 		s.logger.ErrorContext(ctx, "error while attempting to create user refresh token", "user", user, "err", err)
 		return nil, exceptions.MakeGenericApiError()

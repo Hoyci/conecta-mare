@@ -7,6 +7,8 @@ export const authFetch = async (input: RequestInfo, init: RequestInit = {}) => {
   const store = getCurrentAuthStore();
   let accessToken = store.accessToken;
 
+  console.log("access_token", accessToken)
+
   const doFetch = async (token: string) => {
     const headers = new Headers(init.headers);
     headers.set("Authorization", `Bearer ${token}`);
