@@ -9,8 +9,8 @@ import Signup from "./pages/Signup";
 import Professionals from "./pages/Professionals";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
-import PrivateRoute from "./pages/PrivateRoute";
 import Onboarding from "./pages/Onboarding";
+import ProtectedLayout from "./pages/ProtectedLayout";
 
 const queryClient = new QueryClient();
 
@@ -24,19 +24,16 @@ const App = () => (
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/professionals" element={<Professionals />} />
-        <Route path="/onboarding" element={<Onboarding />} />
-        <Route
-          path="/dashboard"
-          element={
-            <PrivateRoute requireAuth={false}>
-              <Dashboard />
-            </PrivateRoute>
-          }
-        />
         <Route path="*" element={<NotFound />} />
+
+        <Route element={<ProtectedLayout />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/onboarding" element={<Onboarding />} />
+        </Route>
       </Routes>
     </TooltipProvider>
   </QueryClientProvider>
 );
 
 export default App;
+

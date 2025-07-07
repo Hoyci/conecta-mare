@@ -71,12 +71,10 @@ func main() {
 
 	logger = logger.With("env", cfg.Environment)
 
-	logger.Info(fmt.Sprintf("Launching %s with the following settings:", cfg.AppName),
-		"port", cfg.Port,
-	)
-
 	router := server.NewRouter()
 	server := server.NewServer(cfg.Port, router)
+
+	logger.Info("Starting database and storage services")
 
 	db := database.New(cfg.DBUsername, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBDatabase)
 	defer db.Close()
@@ -86,7 +84,11 @@ func main() {
 		cfg.StorageAccessKey,
 		cfg.StorageSecretKey,
 		cfg.StorageBucketName,
-    cfg.Environment,
+		cfg.Environment,
+	)
+
+	logger.Info(fmt.Sprintf("Launching %s with the following settings:", cfg.AppName),
+		"port", cfg.Port,
 	)
 
 	tokenProvider := jwt.NewProvider(cfg.JWTAccessKey, cfg.JWTRefreshKey)
