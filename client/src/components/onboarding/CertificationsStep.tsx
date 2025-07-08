@@ -5,9 +5,10 @@ import { Button } from "../ui/button";
 import { Plus } from "lucide-react";
 import { Card } from "../ui/card";
 import { Input } from "../ui/input";
+import { cn } from "@/lib/utils";
 
 const CertificationsStep = () => {
-  const { register } = useFormContext<ProfessionalProfile>();
+  const { register, formState: { errors } } = useFormContext<ProfessionalProfile>();
 
   const { fields, append, remove } = useFieldArray<ProfessionalProfile>({
     name: "certifications",
@@ -51,7 +52,13 @@ const CertificationsStep = () => {
                 id={`certifications.${index}.institution`}
                 placeholder="Nome da instituição"
                 {...register(`certifications.${index}.institution`)}
+                className={cn(errors.certifications?.[index]?.institution && "border-red-500")}
               />
+              {errors.certifications?.[index]?.institution && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.certifications?.[index]?.institution?.message}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor={`certifications.${index}.courseName`}>
@@ -61,7 +68,13 @@ const CertificationsStep = () => {
                 id={`certifications.${index}.courseName`}
                 placeholder="Nome do curso/certificação"
                 {...register(`certifications.${index}.courseName`)}
+                className={cn(errors.certifications?.[index]?.courseName && "border-red-500")}
               />
+              {errors.certifications?.[index]?.courseName && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.certifications?.[index]?.courseName?.message}
+                </p>
+              )}
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -73,7 +86,13 @@ const CertificationsStep = () => {
                 id={`certifications.${index}.startDate`}
                 type="date"
                 {...register(`certifications.${index}.startDate`)}
+                className={cn(errors.certifications?.[index]?.startDate && "border-red-500")}
               />
+              {errors.certifications?.[index]?.startDate && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.certifications?.[index]?.startDate?.message}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor={`certifications.${index}.endDate`}>
@@ -83,7 +102,13 @@ const CertificationsStep = () => {
                 id={`certifications.${index}.endDate`}
                 type="date"
                 {...register(`certifications.${index}.endDate`)}
+                className={cn(errors.certifications?.[index]?.endDate && "border-red-500")}
               />
+              {errors.certifications?.[index]?.endDate && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.certifications?.[index]?.endDate?.message}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex justify-end pt-2">

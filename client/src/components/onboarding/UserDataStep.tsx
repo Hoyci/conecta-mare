@@ -112,14 +112,19 @@ export const UserDataStep = () => {
             errors.jobDescription && "border-red-500",
           )}
         />
-        <div className="text-xs text-gray-500 text-right">
-          {jobDescription.length}/{MAX_JOB_DESCRIPTION_CHARS} caracteres
+        <div className="flex items-center">
+          {errors.jobDescription && (
+            <p className="text-red-500 text-xs">
+              {errors.jobDescription.message}
+            </p>
+          )}
+
+          <div className="ml-auto text-xs text-gray-500">
+            {jobDescription.length}/{MAX_JOB_DESCRIPTION_CHARS} caracteres
+          </div>
         </div>
-        {errors.jobDescription && (
-          <p className="text-red-500 text-xs mt-1">
-            {errors.jobDescription.message}
-          </p>
-        )}
+
+
       </div>
       <div className="space-y-2">
         <Label htmlFor="subcategory">Categoria *</Label>
