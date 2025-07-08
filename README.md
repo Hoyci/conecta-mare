@@ -7,9 +7,6 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791.svg?style=for-the-badge&logo=postgresql)
 ![Docker](https://img.shields.io/badge/Docker-Pronto-2496ED.svg?style=for-the-badge&logo=docker)
 
-**ConectaMaré** é uma plataforma full-stack moderna e de alto impacto, projetada para ser a ponte digital entre clientes e os melhores profissionais do Complexo da Maré. Nossa missão é valorizar a economia local, gerar oportunidades e facilitar o acesso a serviços de qualidade de forma segura e eficiente.
----
-
 ## 🎯 O Projeto
 
 O ConectaMaré nasceu da necessidade de criar um ecossistema digital que fortaleça a comunidade do Complexo da Maré, no Rio de Janeiro. A plataforma oferece uma solução de ponta a ponta:
