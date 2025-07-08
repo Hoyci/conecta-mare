@@ -18,32 +18,40 @@ func NewRepository(db *sqlx.DB) UserProfilesRepository {
 	return &repository{db}
 }
 
-func (r *repository) CreateTx(tx *sqlx.Tx, profile *UserProfile) error {
-	model := profile.UserProfileToModel()
+func (r *repository) CreateInitialProfileTx(ctx context.Context, tx *sqlx.Tx, userProfile *UserProfile) error {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	modelUserProfile := userProfile.ToModel()
+
 	query := `
-	INSERT INTO user_profiles (
-		id,
-		user_id,
-		full_name,
-		category_id,
-		subcategory_id,
-		profile_image,
-		job_description,
-		phone,
-		social_links
-	) VALUES (
-		:id,
-		:user_id,
-		:full_name,
-		:category_id,
-		:subcategory_id,
-		:profile_image,
-		:job_description,
-		:phone,
-		:social_links
-	)
-	`
-	_, err := tx.NamedExec(query, model)
+		INSERT INTO user_profiles (
+ 			id, 
+			user_id, 
+			full_name, 
+			category_id, 
+			subcategory_id,
+			profile_image,
+			job_description,
+		 	phone,
+			social_links,
+			created_at,
+			updated_at
+		) VALUES (
+			:id, 
+			:user_id, 
+			:full_name,
+			:category_id,
+			:subcategory_id,
+		 	:profile_image,
+			:job_description,
+			:phone,
+			:social_links,
+			:created_at,
+			:updated_at
+		)`
+
+	_, err := tx.NamedExecContext(ctx, query, modelUserProfile)
 	return err
 }
 
@@ -61,4 +69,27 @@ func (r *repository) FindByUserID(ctx context.Context, userID string) (*UserProf
 	}
 
 	return NewFromModel(userProfile), nil
+}
+
+func (r *repository) UpdateTx(ctx context.Context, tx *sqlx.Tx, userProfile *UserProfile) error {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	modelUserProfile := userProfile.ToModel()
+
+	query := `
+		UPDATE user_profiles SET
+			full_name = :full_name,
+			category_id = :category_id,
+			subcategory_id = :subcategory_id,
+			profile_image = :profile_image,
+			job_description = :job_description,
+			phone = :phone,
+			social_links = :social_links,
+			updated_at = :updated_at
+		WHERE user_id = :user_id
+	`
+
+	_, err := tx.NamedExecContext(ctx, query, modelUserProfile)
+	return err
 }

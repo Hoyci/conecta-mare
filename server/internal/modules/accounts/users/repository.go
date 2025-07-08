@@ -20,6 +20,23 @@ func NewRepo(db *sqlx.DB) UsersRepository {
 	return &usersRepository{db: db}
 }
 
+func (ur *usersRepository) Register(ctx context.Context, tx *sqlx.Tx, user *User) error {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	modelUser := user.ToModel()
+
+	query := `
+		INSERT INTO users (
+			id, email, password_hash, role, created_at, updated_at, deleted_at
+		) VALUES (
+			:id, :email, :password_hash, :role, :created_at, :updated_at, :deleted_at
+		)`
+
+	_, err := tx.NamedExecContext(ctx, query, modelUser)
+	return err
+}
+
 func (ur *usersRepository) DeleteByID(ctx context.Context, ID string) error {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
@@ -74,36 +91,6 @@ func (ur *usersRepository) GetByRole(ctx context.Context, role string) ([]*model
 	}
 
 	return users, nil
-}
-
-func (ur *usersRepository) Register(ctx context.Context, user *User) error {
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
-	defer cancel()
-
-	modelUser := user.ToModel()
-
-	query := `
-		INSERT INTO users (
-			id,
-			email,
-			password_hash,
-			role,
-			created_at,
-			updated_at,
-			deleted_at
-		) VALUES (
-			:id,
-			:email,
-			:password_hash,
-			:role,
-			:created_at,
-			:updated_at,
-			:deleted_at
-		)
-	`
-
-	_, err := ur.db.NamedExecContext(ctx, query, modelUser)
-	return err
 }
 
 func (r *usersRepository) CountBySubcategoryIDs(ctx context.Context, subcategoryIDs []string) (map[string]int, error) {

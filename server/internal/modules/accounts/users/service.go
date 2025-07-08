@@ -3,6 +3,7 @@ package users
 import (
 	"conecta-mare-server/internal/common"
 	"conecta-mare-server/internal/modules/accounts/session"
+	"conecta-mare-server/internal/modules/accounts/userprofiles"
 	"conecta-mare-server/internal/server/middlewares"
 	"conecta-mare-server/pkg/exceptions"
 	"conecta-mare-server/pkg/jwt"
@@ -15,22 +16,27 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 )
 
 func NewService(
+	db *sqlx.DB,
 	repository UsersRepository,
+	userProfilesRepo userprofiles.UserProfilesRepository,
 	sessionsService session.SessionsService,
 	storageClient *storage.StorageClient,
 	tokenProvider jwt.JWTProvider,
 	logger *slog.Logger,
 ) UsersService {
 	return &userService{
-		repository:     repository,
-		sessionService: sessionsService,
-		storageClient:  storageClient,
-		tokenProvider:  tokenProvider,
-		logger:         logger,
+		db:               db,
+		repository:       repository,
+		userProfilesRepo: userProfilesRepo,
+		sessionService:   sessionsService,
+		storageClient:    storageClient,
+		tokenProvider:    tokenProvider,
+		logger:           logger,
 	}
 }
 
@@ -49,13 +55,13 @@ func (s *userService) GetByID(ctx context.Context, ID string) (*User, error) {
 func (s *userService) Register(ctx context.Context, input common.RegisterUserRequest) error {
 	s.logger.InfoContext(ctx, "attempting to create user", "email", input.Email)
 
-	existingser, err := s.repository.GetByEmail(ctx, input.Email)
+	existingUser, err := s.repository.GetByEmail(ctx, input.Email)
 	if err != nil {
 		s.logger.ErrorContext(ctx, "error while attempting check for existing user", "err", err, "email", input.Email)
 		return exceptions.MakeGenericApiError()
 	}
 
-	if existingser != nil {
+	if existingUser != nil {
 		s.logger.InfoContext(ctx, "email is taken", "email", input.Email)
 		return exceptions.MakeApiErrorWithStatus(http.StatusConflict, exceptions.ErrEmailTaken)
 	}
@@ -66,30 +72,46 @@ func (s *userService) Register(ctx context.Context, input common.RegisterUserReq
 		return exceptions.MakeGenericApiError()
 	}
 
-	s.logger.InfoContext(ctx, "password successfully hashed, creating user", "email", input.Email)
-	user, err := New(
-		input.Email,
-		passwordHash.Hash,
-		input.Role,
-	)
+	user, err := New(input.Email, passwordHash.Hash, input.Role)
 	if err != nil {
 		s.logger.ErrorContext(ctx, "error while attempting to process user entity", "err", err, "email", input.Email)
 		return exceptions.MakeApiErrorWithStatus(http.StatusUnprocessableEntity, err)
 	}
 
-	s.logger.InfoContext(ctx, "user avatar successfully created", "email", input.Email)
+	tx, err := s.db.Beginx()
+	if err != nil {
+		s.logger.ErrorContext(ctx, "error while starting transaction", "err", err)
+		return exceptions.MakeGenericApiError()
+	}
+	defer tx.Rollback()
 
-	if err := s.repository.Register(ctx, user); err != nil {
+	if err := s.repository.Register(ctx, tx, user); err != nil {
 		s.logger.ErrorContext(ctx, "error while attempting create user", "err", err, "user", user)
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
 			return exceptions.MakeApiErrorWithStatus(http.StatusConflict, fmt.Errorf("%s already taken", pqErr.Detail))
 		}
-
 		return exceptions.MakeGenericApiError()
 	}
 
-	s.logger.InfoContext(ctx, "user successfully created", "user_id", user.ID())
+	userProfile, err := userprofiles.New(user.ID(), input.Name)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "error while attempting to process user profile entity", "err", err, "email", input.Email)
+		return exceptions.MakeApiErrorWithStatus(http.StatusUnprocessableEntity, err)
+
+	}
+
+	if err := s.userProfilesRepo.CreateInitialProfileTx(ctx, tx, userProfile); err != nil {
+		s.logger.ErrorContext(ctx, "error while creating initial user profile", "err", err)
+		return exceptions.MakeGenericApiError()
+	}
+
+	if err := tx.Commit(); err != nil {
+		s.logger.ErrorContext(ctx, "error while commiting user registration transaction", "err", err)
+		return exceptions.MakeGenericApiError()
+	}
+
+	s.logger.InfoContext(ctx, "user and initial profile successfully created", "user_id", user.ID())
 	return nil
 }
 

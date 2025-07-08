@@ -104,7 +104,15 @@ func main() {
 
 	sessionsService := session.NewService(sessionsRepo, logger)
 	subcategoriesService := subcategories.NewService(subcategoriesRepo, logger)
-	usersService := users.NewService(usersRepo, sessionsService, storageClient, *tokenProvider, logger)
+	usersService := users.NewService(
+		db.DB(),
+		usersRepo,
+		userProfilesRepo,
+		sessionsService,
+		storageClient,
+		*tokenProvider,
+		logger,
+	)
 	categoriesService := categories.NewService(categoriesRepo, subcategoriesService, usersService, logger)
 	onboardingsService := onboardings.NewService(
 		db.DB(),
