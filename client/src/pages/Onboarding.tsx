@@ -1,18 +1,25 @@
 import React from "react";
-import { useForm, FormProvider } from "react-hook-form";
+import { useForm, FormProvider, FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-import { ProfessionalProfile, ProfessionalProfileSchema } from "@/types/user";
+import {
+  OnboardingRequestSchema,
+  OnboardingRequestValues,
+} from "@/types/user";
+
 import { UserDataStep } from "@/components/onboarding/UserDataStep";
 import { ProjectStep } from "@/components/onboarding/ProjectStep";
 import ServicesStep from "@/components/onboarding/ServicesStep";
 import CertificationsStep from "@/components/onboarding/CertificationsStep";
+import { useToast } from "@/hooks/use-toast";
+import { submitOnboardingProfile } from "@/services/user-service";
+import { useMutation } from "@tanstack/react-query";
 
 const steps = [
   {
@@ -45,12 +52,39 @@ const steps = [
   },
 ];
 
+const fieldToStepMap: Record<string, number> = {
+  profileImage: 1,
+  jobDescription: 1,
+  subcategoryID: 1,
+  phone: 1,
+  socialLinks: 1,
+  certifications: 2,
+  projects: 3,
+  services: 4,
+  hasOwnLocation: 4,
+  location: 4,
+};
+
+const fieldOrder = [
+  "profileImage",
+  "jobDescription",
+  "subcategoryID",
+  "phone",
+  "socialLinks",
+  "certifications",
+  "projects",
+  "services",
+  "hasOwnLocation",
+  "location",
+];
+
 const Onboarding = () => {
   const navigate = useNavigate();
+  const { toast } = useToast()
   const [currentStep, setCurrentStep] = useState(1);
 
-  const methods = useForm<ProfessionalProfile>({
-    resolver: zodResolver(ProfessionalProfileSchema),
+  const methods = useForm<OnboardingRequestValues>({
+    resolver: zodResolver(OnboardingRequestSchema),
     mode: "all",
     defaultValues: {
       jobDescription: "",
@@ -72,6 +106,25 @@ const Onboarding = () => {
       },
     },
   });
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: submitOnboardingProfile,
+    onSuccess: () => {
+      toast({
+        title: "Perfil configurado com sucesso! ✅",
+        description: "Você será redirecionado para o seu dashboard.",
+      });
+      navigate("/dashboard");
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Ocorreu um erro",
+        description: error.message,
+      });
+    },
+  });
+
 
   const watchedFields = methods.watch();
 
@@ -121,17 +174,21 @@ const Onboarding = () => {
     }
   };
 
-  const onSubmit = (data: ProfessionalProfile) => {
-    if (!isStepValid(totalSteps)) {
-      console.error("Tentativa de submissão com o formulário inválido.");
-      return;
-    }
-    console.log("Dados validados e prontos para enviar:", data);
-    // navigate("/dashboard"); // ou para uma página de sucesso
+  const onSubmit = (data: OnboardingRequestValues) => {
+    console.log("Dados validados prontos para enviar:", data);
+    // mutate(data);
   };
 
-  const onInvalid = (errors: any) => {
-    console.error("Falha na validação do formulário:", errors);
+  const onInvalid = (errors: FieldErrors<OnboardingRequestValues>) => {
+    for (const field of fieldOrder) {
+      if (errors[field as keyof OnboardingRequestValues]) {
+        const errorStep = fieldToStepMap[field];
+        if (errorStep) {
+          setCurrentStep(errorStep);
+          break;
+        }
+      }
+    }
   };
 
   const handleNext = () => {
@@ -180,10 +237,7 @@ const Onboarding = () => {
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Vamos configurar seu perfil profissional em alguns passos simples.
-          </p>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Isso ajudará você a se conectar com clientes, mostrar seus serviços
-            e projetos realizados.
+            Isso ajudará você a se conectar com clientes, mostrar seus serviços e projetos realizados.
           </p>
         </div>
 
@@ -229,23 +283,29 @@ const Onboarding = () => {
               </Button>
             ) : (
               <Button
-                type="submit"
+                type="button"
                 onClick={methods.handleSubmit(onSubmit, onInvalid)}
-                disabled={!isCurrentStepValid}
-                className="bg-conecta-green hover:bg-conecta-green-dark px-8 py-2 shadow-md"
+                disabled={!isCurrentStepValid || isPending}
+                className="bg-conecta-green hover:bg-conecta-green-dark px-8 py-2 shadow-md w-52"
               >
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Finalizar Configuração
-              </Button>
-            )}
+                {isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Finalizando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Finalizar Configuração
+                  </>
+                )}
+              </Button>)}
           </div>
         </div>
       </div>
     </div>
   );
 };
-
-export default Onboarding;
 
 interface StepIndicatorProps {
   currentStep: number;
@@ -268,8 +328,8 @@ const StepIndicator = ({ currentStep, steps }: StepIndicatorProps) => {
             <div className="flex items-center gap-3">
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all ${isActive
-                    ? "bg-conecta-blue text-white shadow-lg"
-                    : "bg-gray-200 text-gray-600"
+                  ? "bg-conecta-blue text-white shadow-lg"
+                  : "bg-gray-200 text-gray-600"
                   }`}
               >
                 {isCompleted ? <CheckCircle className="w-5 h-5" /> : stepNumber}
@@ -293,3 +353,5 @@ const StepIndicator = ({ currentStep, steps }: StepIndicatorProps) => {
     </div>
   );
 };
+
+export default Onboarding;

@@ -179,7 +179,7 @@ export const ProjectImageUpload = ({ index }: ProjectImageUploadProps) => {
             Clique para carregar fotos do projeto
           </p>
           <p className="text-sm text-gray-500">
-            PNG, JPG até 5MB cada (máximo 5 fotos)
+            PNG, JPG até 5MB cada (máximo  {MAX_PROJECT_IMAGES} fotos)
           </p>
         </div>
         <input

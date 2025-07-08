@@ -183,20 +183,26 @@ const ServiceImageUpload = ({ index }: ServiceImageUploadProps) => {
   const { watch, setValue } = useFormContext();
   const images = watch(`services.${index}.images`);
 
-  const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
+  const handleImageUpload = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(event.target.files || []);
+      const availableSlots = MAX_SERVICE_IMAGES - images.length;
 
-      const preview = {
+      if (availableSlots <= 0) return;
+      const filesToAdd = files.slice(0, availableSlots);
+
+      const newImages = filesToAdd.map((file) => ({
         file,
         url: URL.createObjectURL(file),
-      };
+      }));
 
-      setValue(`services.${index}.image`, preview, { shouldValidate: true });
+      setValue(`services.${index}.images`, [...images, ...newImages], {
+        shouldValidate: true,
+      });
     },
-    [index, setValue],
+    [images, index, setValue],
   );
+
 
   const handleRemoveImage = useCallback(
     (imgIndex: number) => {
@@ -232,7 +238,7 @@ const ServiceImageUpload = ({ index }: ServiceImageUploadProps) => {
           accept="image/*"
           multiple
           className="hidden"
-          onChange={handleChange}
+          onChange={handleImageUpload}
           disabled={images.length >= MAX_SERVICE_IMAGES}
         />
       </label>
