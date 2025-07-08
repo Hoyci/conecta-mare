@@ -7,6 +7,7 @@ import (
 )
 
 type UserProfilesRepository interface {
-	CreateTx(tx *sqlx.Tx, profile *UserProfile) error
+	CreateInitialProfileTx(ctx context.Context, tx *sqlx.Tx, userProfile *UserProfile) error
 	FindByUserID(ctx context.Context, userID string) (*UserProfile, error)
+	UpdateTx(ctx context.Context, tx *sqlx.Tx, userProfile *UserProfile) error
 }

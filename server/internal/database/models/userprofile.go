@@ -8,11 +8,11 @@ type UserProfile struct {
 	ID             string     `db:"id"`
 	UserID         string     `db:"user_id"`
 	FullName       string     `db:"full_name"`
-	CategoryID     string     `db:"category_id"`
-	SubcategoryID  string     `db:"subcategory_id"`
-	ProfileImage   string     `db:"profile_image"`
-	JobDescription string     `db:"job_description"`
-	Phone          string     `db:"phone"`
+	CategoryID     *string    `db:"category_id"`
+	SubcategoryID  *string    `db:"subcategory_id"`
+	ProfileImage   *string    `db:"profile_image"`
+	JobDescription *string    `db:"job_description"`
+	Phone          *string    `db:"phone"`
 	SocialLinks    []byte     `db:"social_links"`
 	CreatedAt      time.Time  `db:"created_at"`
 	UpdatedAt      *time.Time `db:"updated_at"`

@@ -14,41 +14,32 @@ type UserProfile struct {
 	id             string
 	userID         string
 	fullName       string
-	categoryID     string
-	subcategoryID  string
-	profileImage   string
-	jobDescription string
-	phone          string
+	categoryID     *string
+	subcategoryID  *string
+	profileImage   *string
+	jobDescription *string
+	phone          *string
 	socialLinks    map[string]string
 	createdAt      time.Time
 	updatedAt      *time.Time
 }
 
-func New(
-	userID,
-	fullName,
-	categoryID,
-	subcategoryID,
-	profileImage,
-	jobDescription,
-	phone string,
-	socialLinks map[string]string,
-) (*UserProfile, error) {
+func New(userID, fullName string) (*UserProfile, error) {
 	userProfile := UserProfile{
 		id:             uid.New("userprofile"),
 		userID:         userID,
 		fullName:       fullName,
-		categoryID:     categoryID,
-		subcategoryID:  subcategoryID,
-		profileImage:   profileImage,
-		jobDescription: jobDescription,
-		phone:          phone,
-		socialLinks:    socialLinks,
+		categoryID:     nil,
+		subcategoryID:  nil,
+		profileImage:   nil,
+		jobDescription: nil,
+		phone:          nil,
+		socialLinks:    nil,
 		createdAt:      time.Now(),
 		updatedAt:      nil,
 	}
 
-	if err := userProfile.validate(); err != nil {
+	if err := userProfile.validateCreation(); err != nil {
 		return nil, exceptions.MakeApiError(err)
 	}
 
@@ -63,6 +54,8 @@ func NewFromModel(m models.UserProfile) *UserProfile {
 		id:             m.ID,
 		userID:         m.UserID,
 		fullName:       m.FullName,
+		categoryID:     m.CategoryID,
+		subcategoryID:  m.SubcategoryID,
 		profileImage:   m.ProfileImage,
 		jobDescription: m.JobDescription,
 		phone:          m.Phone,
@@ -72,7 +65,7 @@ func NewFromModel(m models.UserProfile) *UserProfile {
 	}
 }
 
-func (up *UserProfile) UserProfileToModel() models.UserProfile {
+func (up *UserProfile) ToModel() models.UserProfile {
 	socialLinksBytes, _ := json.Marshal(up.socialLinks)
 
 	return models.UserProfile{
@@ -90,7 +83,28 @@ func (up *UserProfile) UserProfileToModel() models.UserProfile {
 	}
 }
 
-func (up *UserProfile) validate() error {
+func (up *UserProfile) Update(
+	categoryID,
+	subcategoryID,
+	profileImage,
+	jobDescription,
+	phone string,
+	socialLinks map[string]string,
+) error {
+	up.categoryID = &categoryID
+	up.subcategoryID = &subcategoryID
+	up.profileImage = &profileImage
+	up.jobDescription = &jobDescription
+	up.phone = &phone
+	up.socialLinks = socialLinks
+
+	now := time.Now()
+	up.updatedAt = &now
+
+	return up.validateUpdate()
+}
+
+func (up *UserProfile) validateCreation() error {
 	if up.userID == "" {
 		return fmt.Errorf("user_id is required")
 	}
@@ -99,16 +113,28 @@ func (up *UserProfile) validate() error {
 		return fmt.Errorf("full_name is required")
 	}
 
-	if up.jobDescription == "" {
+	return nil
+}
+
+func (up *UserProfile) validateUpdate() error {
+	if up.jobDescription == nil || *up.jobDescription == "" {
 		return fmt.Errorf("job_description is required")
 	}
 
-	if up.phone == "" {
+	if up.phone == nil || *up.phone == "" {
 		return fmt.Errorf("phone is required")
 	}
 
-	if _, ok := valueobjects.SanitizePhoneNumber(up.phone); !ok {
+	if _, ok := valueobjects.SanitizePhoneNumber(*up.phone); !ok {
 		return fmt.Errorf("phone is invalid. use the 219887654321 format")
+	}
+
+	if up.categoryID == nil || *up.categoryID == "" {
+		return fmt.Errorf("category_id is required")
+	}
+
+	if up.subcategoryID == nil || *up.subcategoryID == "" {
+		return fmt.Errorf("subcategory_id is required")
 	}
 
 	return nil
@@ -117,9 +143,9 @@ func (up *UserProfile) validate() error {
 func (up *UserProfile) ID() string                     { return up.id }
 func (up *UserProfile) UserID() string                 { return up.userID }
 func (up *UserProfile) FullName() string               { return up.fullName }
-func (up *UserProfile) ProfileImage() string           { return up.profileImage }
-func (up *UserProfile) JobDescription() string         { return up.jobDescription }
-func (up *UserProfile) Phone() string                  { return up.phone }
+func (up *UserProfile) ProfileImage() *string          { return up.profileImage }
+func (up *UserProfile) JobDescription() *string        { return up.jobDescription }
+func (up *UserProfile) Phone() *string                 { return up.phone }
 func (up *UserProfile) SocialLinks() map[string]string { return up.socialLinks }
 func (up *UserProfile) CreatedAt() time.Time           { return up.createdAt }
 func (up *UserProfile) UpdatedAt() *time.Time          { return up.updatedAt }

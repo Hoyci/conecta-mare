@@ -4,16 +4,19 @@ import (
 	"conecta-mare-server/internal/common"
 	"conecta-mare-server/internal/database/models"
 	"conecta-mare-server/internal/modules/accounts/session"
+	"conecta-mare-server/internal/modules/accounts/userprofiles"
 	"conecta-mare-server/pkg/exceptions"
 	"conecta-mare-server/pkg/jwt"
 	"conecta-mare-server/pkg/storage"
 	"context"
 	"log/slog"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type (
 	UsersRepository interface {
-		Register(ctx context.Context, user *User) error
+		Register(ctx context.Context, tx *sqlx.Tx, user *User) error
 		GetByID(ctx context.Context, ID string) (*models.User, error)
 		GetByEmail(ctx context.Context, email string) (*models.User, error)
 		GetByRole(ctx context.Context, role string) ([]*models.User, error)
@@ -37,11 +40,13 @@ type (
 		GetProfessionalByID(ctx context.Context, ID string) (*common.GetProfessionalByIDResponse, *exceptions.ApiError[string])
 	}
 	userService struct {
-		repository     UsersRepository
-		sessionService session.SessionsService
-		tokenProvider  jwt.JWTProvider
-		storageClient  *storage.StorageClient
-		logger         *slog.Logger
+		db               *sqlx.DB
+		repository       UsersRepository
+		userProfilesRepo userprofiles.UserProfilesRepository
+		sessionService   session.SessionsService
+		tokenProvider    jwt.JWTProvider
+		storageClient    *storage.StorageClient
+		logger           *slog.Logger
 	}
 	userHandler struct {
 		usersService UsersService

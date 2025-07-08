@@ -70,7 +70,7 @@ func (s *onboardingsService) MakeOnboarding(ctx context.Context, r *http.Request
 		s.logger.ErrorContext(ctx, "failed to verifiy if user profile already exists", "err", err)
 		return exceptions.MakeGenericApiError()
 	}
-	if userProfile != nil {
+	if userProfile != nil && userProfile.JobDescription() != nil {
 		s.logger.WarnContext(ctx, "onboarding already exists", "user_id", req.UserID)
 		return exceptions.MakeApiErrorWithStatus(http.StatusConflict, fmt.Errorf("onboarding already done"))
 	}
@@ -95,7 +95,7 @@ func (s *onboardingsService) MakeOnboarding(ctx context.Context, r *http.Request
 		return exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, fmt.Errorf("subcategory with subcategory_id %s does not exists", req.SubcategoryID))
 	}
 
-	s.logger.InfoContext(ctx, "any user_profile found, making onboarding", "user_id", req.UserID)
+	s.logger.InfoContext(ctx, "found user profile, starting onboarding update", "user_id", req.UserID)
 
 	tx, err := s.db.Beginx()
 	if err != nil {
@@ -112,71 +112,54 @@ func (s *onboardingsService) MakeOnboarding(ctx context.Context, r *http.Request
 		}
 	}()
 
-	userProfile, err = s.createUserProfileTx(ctx, tx, r, req)
-	if err != nil {
-		s.logger.ErrorContext(ctx, "error while creating user_profile", "err", err)
+	var profileImageURL string
+	profileImageFile, profileImageHeader, _ := r.FormFile("profile_image")
+	if profileImageFile != nil {
+		defer profileImageFile.Close()
+		objectName := fmt.Sprintf("profiles/profile_%s", req.UserID)
+		url, uploadErr := s.storage.UploadFile(objectName, profileImageHeader)
+		if uploadErr != nil {
+			s.logger.ErrorContext(ctx, "failed to upload profile image", "err", uploadErr)
+			err = exceptions.MakeGenericApiError()
+			return err
+		}
+		profileImageURL = url
+	}
+
+	if err = userProfile.Update(
+		req.CategoryID,
+		req.SubcategoryID,
+		profileImageURL,
+		req.JobDescription,
+		req.Phone,
+		req.SocialLinks,
+	); err != nil {
+		s.logger.ErrorContext(ctx, "error validating user profile update", "err", err)
+		return err
+	}
+
+	if err = s.userProfilesRepository.UpdateTx(ctx, tx, userProfile); err != nil {
+		s.logger.ErrorContext(ctx, "error while making update user profile transaction", "err", err)
 		return exceptions.MakeGenericApiError()
 	}
 
-	if err := s.createCertificationsTx(ctx, tx, userProfile.ID(), req.Certifications); err != nil {
+	if err = s.createCertificationsTx(ctx, tx, userProfile.ID(), req.Certifications); err != nil {
 		s.logger.ErrorContext(ctx, "error while creating user certifications", "err", err)
 		return exceptions.MakeGenericApiError()
 	}
 
-	if err := s.createProjectsTx(ctx, tx, r, userProfile.UserID(), userProfile.ID(), req.Projects); err != nil {
+	if err = s.createProjectsTx(ctx, tx, r, userProfile.UserID(), userProfile.ID(), req.Projects); err != nil {
 		s.logger.ErrorContext(ctx, "error while creating user projects", "err", err)
 		return exceptions.MakeGenericApiError()
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err = tx.Commit(); err != nil {
 		s.logger.ErrorContext(ctx, "error while commiting onboarding transaction", "err", err)
 		return exceptions.MakeGenericApiError()
 	}
 
 	s.logger.InfoContext(ctx, "onboarding completed successfully", "user_id", req.UserID)
 	return nil
-}
-
-func (s *onboardingsService) createUserProfileTx(
-	ctx context.Context,
-	tx *sqlx.Tx,
-	r *http.Request,
-	input *common.OnboardingRequest,
-) (*userprofiles.UserProfile, error) {
-	var profileImageURL string
-	profileImageFile, profileImageHeader, _ := r.FormFile("profile_image")
-	if profileImageFile != nil {
-		defer profileImageFile.Close()
-		objectName := fmt.Sprintf("profiles/profile_%s", input.UserID)
-		url, err := s.storage.UploadFile(objectName, profileImageHeader)
-		if err != nil {
-			s.logger.ErrorContext(ctx, "failed to upload profile image", "err", err)
-			return nil, exceptions.MakeGenericApiError()
-		}
-		profileImageURL = url
-	}
-
-	profile, err := userprofiles.New(
-		input.UserID,
-		input.FullName,
-		input.CategoryID,
-		input.SubcategoryID,
-		profileImageURL,
-		input.JobDescription,
-		input.Phone,
-		input.SocialLinks,
-	)
-	if err != nil {
-		s.logger.ErrorContext(ctx, "error while creating user profile entity", "err", err)
-		return nil, exceptions.MakeApiErrorWithStatus(http.StatusUnprocessableEntity, fmt.Errorf("error creating user_profile entity"))
-	}
-
-	if err := s.userProfilesRepository.CreateTx(tx, profile); err != nil {
-		s.logger.ErrorContext(ctx, "error while making create user profile transaction", "err", err)
-		return nil, exceptions.MakeGenericApiError()
-	}
-
-	return profile, nil
 }
 
 func (s *onboardingsService) createCertificationsTx(ctx context.Context, tx *sqlx.Tx, profileID string, certs []common.Certification) error {
