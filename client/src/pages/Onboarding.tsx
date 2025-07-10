@@ -8,10 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-import {
-  OnboardingRequestSchema,
-  OnboardingRequestValues,
-} from "@/types/user";
+import { OnboardingRequestSchema, OnboardingRequestValues } from "@/types/user";
 
 import { UserDataStep } from "@/components/onboarding/UserDataStep";
 import { ProjectStep } from "@/components/onboarding/ProjectStep";
@@ -20,6 +17,7 @@ import CertificationsStep from "@/components/onboarding/CertificationsStep";
 import { useToast } from "@/hooks/use-toast";
 import { submitOnboardingProfile } from "@/services/user-service";
 import { useMutation } from "@tanstack/react-query";
+import { watch } from "node:fs";
 
 const steps = [
   {
@@ -80,7 +78,7 @@ const fieldOrder = [
 
 const Onboarding = () => {
   const navigate = useNavigate();
-  const { toast } = useToast()
+  const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
 
   const methods = useForm<OnboardingRequestValues>({
@@ -125,7 +123,6 @@ const Onboarding = () => {
     },
   });
 
-
   const watchedFields = methods.watch();
 
   const isStepValid = (step: number) => {
@@ -135,11 +132,33 @@ const Onboarding = () => {
           watchedFields;
         const isPhoneValid = phone && phone.replace(/\D/g, "").length >= 10;
 
-        return (
-          profileImage &&
-          jobDescription &&
-          subcategoryID &&
-          isPhoneValid
+        return profileImage && jobDescription && subcategoryID && isPhoneValid;
+      }
+      case 2: {
+        const { certifications } = watchedFields;
+        if (!certifications || certifications.length === 0) {
+          return true;
+        }
+
+        return certifications.every(
+          (cert) =>
+            cert.institution.length > 0 &&
+            cert.courseName.length > 0 &&
+            cert.startDate,
+        );
+      }
+      case 3: {
+        const { projects } = watchedFields;
+        if (!projects || projects.length === 0) {
+          return true;
+        }
+
+        return projects.every(
+          (project) =>
+            project.name.length > 0 &&
+            project.description.length > 0 &&
+            project.images &&
+            project.images.length >= 1,
         );
       }
       case 4: {
@@ -176,7 +195,7 @@ const Onboarding = () => {
 
   const onSubmit = (data: OnboardingRequestValues) => {
     console.log("Dados validados prontos para enviar:", data);
-    // mutate(data);
+    mutate(data);
   };
 
   const onInvalid = (errors: FieldErrors<OnboardingRequestValues>) => {
@@ -237,7 +256,8 @@ const Onboarding = () => {
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Vamos configurar seu perfil profissional em alguns passos simples.
-            Isso ajudará você a se conectar com clientes, mostrar seus serviços e projetos realizados.
+            Isso ajudará você a se conectar com clientes, mostrar seus serviços
+            e projetos realizados.
           </p>
         </div>
 
@@ -299,7 +319,8 @@ const Onboarding = () => {
                     Finalizar Configuração
                   </>
                 )}
-              </Button>)}
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -327,10 +348,11 @@ const StepIndicator = ({ currentStep, steps }: StepIndicatorProps) => {
           <React.Fragment key={step.indicatorTitle}>
             <div className="flex items-center gap-3">
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all ${isActive
-                  ? "bg-conecta-blue text-white shadow-lg"
-                  : "bg-gray-200 text-gray-600"
-                  }`}
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
+                  isActive
+                    ? "bg-conecta-blue text-white shadow-lg"
+                    : "bg-gray-200 text-gray-600"
+                }`}
               >
                 {isCompleted ? <CheckCircle className="w-5 h-5" /> : stepNumber}
               </div>

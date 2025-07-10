@@ -140,7 +140,7 @@ const ServicesStep = () => {
             <Label>Descrição do Serviço</Label>
             <Textarea
               {...register(`services.${index}.description`)}
-              placeholder="Descreva o que está incluído..."
+              placeholder="Descreva seu serviço..."
               className="min-h-[120px]"
             />
           </div>
@@ -202,7 +202,6 @@ const ServiceImageUpload = ({ index }: ServiceImageUploadProps) => {
     },
     [images, index, setValue],
   );
-
 
   const handleRemoveImage = useCallback(
     (imgIndex: number) => {

@@ -14,7 +14,6 @@ type UserProfile struct {
 	id             string
 	userID         string
 	fullName       string
-	categoryID     *string
 	subcategoryID  *string
 	profileImage   *string
 	jobDescription *string
@@ -29,7 +28,6 @@ func New(userID, fullName string) (*UserProfile, error) {
 		id:             uid.New("userprofile"),
 		userID:         userID,
 		fullName:       fullName,
-		categoryID:     nil,
 		subcategoryID:  nil,
 		profileImage:   nil,
 		jobDescription: nil,
@@ -54,7 +52,6 @@ func NewFromModel(m models.UserProfile) *UserProfile {
 		id:             m.ID,
 		userID:         m.UserID,
 		fullName:       m.FullName,
-		categoryID:     m.CategoryID,
 		subcategoryID:  m.SubcategoryID,
 		profileImage:   m.ProfileImage,
 		jobDescription: m.JobDescription,
@@ -72,7 +69,6 @@ func (up *UserProfile) ToModel() models.UserProfile {
 		ID:             up.id,
 		UserID:         up.userID,
 		FullName:       up.fullName,
-		CategoryID:     up.categoryID,
 		SubcategoryID:  up.subcategoryID,
 		ProfileImage:   up.profileImage,
 		JobDescription: up.jobDescription,
@@ -84,14 +80,12 @@ func (up *UserProfile) ToModel() models.UserProfile {
 }
 
 func (up *UserProfile) Update(
-	categoryID,
 	subcategoryID,
 	profileImage,
 	jobDescription,
 	phone string,
 	socialLinks map[string]string,
 ) error {
-	up.categoryID = &categoryID
 	up.subcategoryID = &subcategoryID
 	up.profileImage = &profileImage
 	up.jobDescription = &jobDescription
@@ -127,10 +121,6 @@ func (up *UserProfile) validateUpdate() error {
 
 	if _, ok := valueobjects.SanitizePhoneNumber(*up.phone); !ok {
 		return fmt.Errorf("phone is invalid. use the 219887654321 format")
-	}
-
-	if up.categoryID == nil || *up.categoryID == "" {
-		return fmt.Errorf("category_id is required")
 	}
 
 	if up.subcategoryID == nil || *up.subcategoryID == "" {

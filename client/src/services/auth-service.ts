@@ -13,7 +13,6 @@ export const loginUser = async (email: string, password: string) => {
     headers: {
       "Content-Type": "application/json",
     },
-    credentials: "include",
   });
 
   if (!res.ok) {

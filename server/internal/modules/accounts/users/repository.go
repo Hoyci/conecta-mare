@@ -107,7 +107,7 @@ func (r *usersRepository) CountBySubcategoryIDs(ctx context.Context, subcategory
 			count(*)
 		FROM users u 
 		INNER JOIN user_profiles up ON up.user_id = u.id
-		LEFT JOIN subcategories s ON s.id = up.subcategory_id AND s.id IN (?)
+		INNER JOIN subcategories s ON s.id = up.subcategory_id AND s.id IN (?)
 		GROUP BY s.id`, subcategoryIDs)
 	if err != nil {
 		return nil, err

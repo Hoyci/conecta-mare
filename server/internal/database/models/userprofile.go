@@ -8,7 +8,6 @@ type UserProfile struct {
 	ID             string     `db:"id"`
 	UserID         string     `db:"user_id"`
 	FullName       string     `db:"full_name"`
-	CategoryID     *string    `db:"category_id"`
 	SubcategoryID  *string    `db:"subcategory_id"`
 	ProfileImage   *string    `db:"profile_image"`
 	JobDescription *string    `db:"job_description"`
@@ -42,4 +41,36 @@ type ProjectImage struct {
 	URL       string    `db:"url"`
 	Ordering  int       `db:"ordering"`
 	CreatedAt time.Time `db:"created_at"`
+}
+
+type Service struct {
+	ID               string     `db:"id"`
+	UserProfileID    string     `db:"user_profile_id"`
+	Name             string     `db:"name"`
+	Description      string     `db:"description"`
+	Price            int        `db:"price"`
+	OwnLocationPrice *int       `db:"own_location_price"`
+	CreatedAt        time.Time  `db:"created_at"`
+	UpdatedAt        *time.Time `db:"updated_at"`
+	DeletedAt        *time.Time `db:"deleted_at"`
+}
+
+type ServiceImage struct {
+	ID        string    `db:"id"`
+	ServiceID string    `db:"service_id"`
+	URL       string    `db:"url"`
+	Ordering  int       `db:"ordering"`
+	CreatedAt time.Time `db:"created_at"`
+}
+
+type Location struct {
+	ID            string     `db:"id"`
+	UserProfileID string     `db:"user_profile_id"`
+	Street        string     `db:"street"`
+	Number        string     `db:"number"`
+	Complement    string     `db:"complement"`
+	Neighborhood  string     `db:"neighborhood"`
+	CreatedAt     time.Time  `db:"created_at"`
+	UpdatedAt     *time.Time `db:"updated_at"`
+	DeletedAt     *time.Time `db:"deleted_at"`
 }

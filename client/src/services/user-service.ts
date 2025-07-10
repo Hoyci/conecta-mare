@@ -2,10 +2,7 @@ import { env } from "@/config/env";
 import { authFetch } from "@/lib/auth-fetch";
 import { createOnboardingFormData } from "@/lib/formDataHelper";
 import { toCamelCase } from "@/lib/utils";
-import {
-  OnboardingRequestValues,
-  ProfessionalProfile,
-} from "@/types/user";
+import { OnboardingRequestValues, ProfessionalProfile } from "@/types/user";
 
 export const getProfessionals = async () => {
   const apiUrl = `${env.data.VITE_API_URL}/api/v1/users/professionals`;
@@ -49,19 +46,23 @@ export const getProfessionalByID = async (userID: string) => {
   return camelizedDada;
 };
 
-export const submitOnboardingProfile = async (data: OnboardingRequestValues) => {
+export const submitOnboardingProfile = async (
+  data: OnboardingRequestValues,
+) => {
   const formData = createOnboardingFormData(data);
 
-  const apiUrl = `${env.data.VITE_API_URL}/api/v1/users/onboarding`;
+  const apiUrl = `${env.data.VITE_API_URL}/api/v1/onboarding`;
 
   const response = await authFetch(apiUrl, {
-    method: 'POST',
+    method: "POST",
     body: formData,
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ message: 'Erro desconhecido ao processar a resposta.' }));
-    throw new Error(errorData.message || 'Falha ao atualizar o perfil.');
+    const errorData = await response
+      .json()
+      .catch(() => ({ message: "Erro desconhecido ao processar a resposta." }));
+    throw new Error(errorData.message || "Falha ao atualizar o perfil.");
   }
 
   return response.json();
