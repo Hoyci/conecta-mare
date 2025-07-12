@@ -4,7 +4,7 @@ import { z } from "zod";
 // CONSTANTES E TIPOS BASE
 // =================================================================
 
-const FileListClass = typeof FileList !== "undefined" ? FileList : class { };
+const FileListClass = typeof FileList !== "undefined" ? FileList : class {};
 const ROLES = ["client", "professional"] as const;
 const DATE_SCHEMA = z.date().nullable();
 
@@ -14,6 +14,7 @@ export const MAX_PROJECT_IMAGES = 3;
 export const MAX_SERVICES = 3;
 export const MAX_SERVICE_IMAGES = 1;
 export const MAX_JOB_DESCRIPTION_CHARS = 40;
+export const MAX_PROJECT_DESCRIPTION_CHARS = 100;
 
 // =================================================================
 // SCHEMAS DE DADOS (MODELO)
@@ -57,23 +58,33 @@ export const ProjectImageSchema = z.object({
 export const ProjectSchema = z.object({
   name: z.string().min(1, "O nome do projeto é obrigatório."),
   description: z.string().min(1, "A descrição do projeto é obrigatória."),
-  images: z.array(FormImageSchema).min(1, "Adicione pelo menos uma imagem ao projeto.").max(MAX_PROJECT_IMAGES),
+  images: z
+    .array(FormImageSchema)
+    .min(1, "Adicione pelo menos uma imagem ao projeto.")
+    .max(MAX_PROJECT_IMAGES),
 });
 
-export const CertificationSchema = z.object({
-  institution: z.string().min(3, "O nome da instituição é obrigatório."),
-  courseName: z.string().min(3, "O nome do curso é obrigatório."),
-  startDate: z.coerce.date({ invalid_type_error: "Forneça uma data de início válida." }),
-  endDate: z.coerce.date({ invalid_type_error: "Forneça uma data final válida." }).optional().nullable(),
-}).refine(data => {
-  if (data.startDate && data.endDate) {
-    return data.startDate < data.endDate;
-  }
-  return true;
-}, {
-  message: "A data de início deve ser anterior à data de término",
-  path: ["endDate"],
-});
+export const CertificationSchema = z
+  .object({
+    institution: z.string({ message: "O nome da instituição é obrigatório." }),
+    courseName: z.string({ message: "O nome do curso é obrigatório." }),
+    startDate: z.coerce.date({
+      message: "A data de início do curso é obrigatória",
+    }),
+    endDate: z.coerce.date().optional().nullable(),
+  })
+  .refine(
+    (data) => {
+      if (data.startDate && data.endDate) {
+        return data.startDate < data.endDate;
+      }
+      return true;
+    },
+    {
+      message: "A data de início deve ser anterior à data de término",
+      path: ["endDate"],
+    },
+  );
 
 export const ServiceImageSchema = z.object({
   id: z.string().optional(),
@@ -105,7 +116,10 @@ export const ProfessionalProfileSchema = UserProfileSchema.extend({
   hasOwnLocation: z.boolean(),
   location: LocationSchema.optional(),
   projects: z.array(ProjectSchema).max(MAX_PROJECTS).optional(),
-  certifications: z.array(CertificationSchema).max(MAX_CERTIFICATIONS).optional(),
+  certifications: z
+    .array(CertificationSchema)
+    .max(MAX_CERTIFICATIONS)
+    .optional(),
   services: z.array(ServiceSchema).max(MAX_SERVICES).optional(),
 });
 
@@ -114,17 +128,39 @@ export const ProfessionalProfileSchema = UserProfileSchema.extend({
 // =================================================================
 
 export const AuthSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
+  email: z
+    .string({
+      required_error: "O e-mail é obrigatório.",
+    })
+    .email({
+      message: "Por favor, insira um endereço de e-mail válido.",
+    }),
+  password: z
+    .string({
+      required_error: "A senha é obrigatória.",
+    })
+    .min(8, {
+      message: "A senha deve ter no mínimo 8 caracteres.",
+    }),
 });
 
 export const SignupSchema = AuthSchema.extend({
-  name: z.string().min(2),
-  confirmPassword: z.string(),
-  role: z.enum(ROLES),
+  name: z
+    .string({
+      required_error: "O nome é obrigatório.",
+    })
+    .min(2, {
+      message: "O nome deve ter no mínimo 2 caracteres.",
+    }),
+  confirmPassword: z.string({
+    required_error: "A confirmação de senha é obrigatória.",
+  }),
+  role: z.enum(ROLES, {
+    errorMap: () => ({ message: "Por favor, selecione um cargo válido." }),
+  }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "As senhas não coincidem",
-  path: ["confirmPassword"],
+  path: ["confirmPassword"], // O erro será aplicado a este campo
 });
 
 export const LoginSchema = AuthSchema.extend({
@@ -135,39 +171,70 @@ export const LoginSchema = AuthSchema.extend({
 // SCHEMAS PARA O FORMULÁRIO DE ONBOARDING
 // =================================================================
 
-export const OnboardingRequestSchema = z.object({
-  profileImage: z.instanceof(FileListClass).refine((files) => files?.length >= 1, "A foto de perfil é obrigatória."),
-  jobDescription: z.string().min(1, "Necessário inserir uma descrição sobre seu trabalho").max(MAX_JOB_DESCRIPTION_CHARS),
-  subcategoryID: z.string({ required_error: "Você deve selecionar uma categoria." }),
-  phone: z.string().min(15, "O telefone é obrigatório e deve ser válido."),
-  socialLinks: z.object({
-    instagram: z.string().optional(),
-    linkedin: z.string().optional(),
-  }).optional(),
-  certifications: z.array(CertificationSchema).max(MAX_CERTIFICATIONS).optional(),
-  projects: z.array(ProjectSchema).max(MAX_PROJECTS).optional(),
-  services: z.array(ServiceSchema).min(1, "Você deve adicionar pelo menos um serviço.").max(MAX_SERVICES),
-  hasOwnLocation: z.boolean(),
-  location: LocationSchema.optional(),
-})
-  .refine((data) => {
-    if (data.hasOwnLocation) {
-      return data.location?.street && data.location?.number && data.location?.neighborhood;
-    }
-    return true;
-  }, {
-    message: "O endereço completo é obrigatório se você atende em local próprio.",
-    path: ["location.street"],
+export const OnboardingRequestSchema = z
+  .object({
+    profileImage: z
+      .instanceof(FileListClass)
+      .refine((files) => files?.length >= 1, "A foto de perfil é obrigatória."),
+    jobDescription: z
+      .string()
+      .min(1, "Necessário inserir uma descrição sobre seu trabalho")
+      .max(MAX_JOB_DESCRIPTION_CHARS),
+    subcategoryID: z.string({
+      required_error: "Você deve selecionar uma categoria.",
+    }),
+    phone: z.string().min(15, "O telefone é obrigatório e deve ser válido."),
+    socialLinks: z
+      .object({
+        instagram: z.string().optional(),
+        linkedin: z.string().optional(),
+      })
+      .optional(),
+    certifications: z
+      .array(CertificationSchema)
+      .max(MAX_CERTIFICATIONS)
+      .optional(),
+    projects: z.array(ProjectSchema).max(MAX_PROJECTS).optional(),
+    services: z
+      .array(ServiceSchema)
+      .min(1, "Você deve adicionar pelo menos um serviço.")
+      .max(MAX_SERVICES),
+    hasOwnLocation: z.boolean(),
+    location: LocationSchema.optional(),
   })
-  .refine((data) => {
-    if (data.hasOwnLocation) {
-      return data.services.every(s => typeof s.ownLocationPrice === 'number' && s.ownLocationPrice > 0);
-    }
-    return true;
-  }, {
-    message: "O preço para atendimento no local próprio é obrigatório para todos os serviços.",
-    path: ["services"],
-  });
+  .refine(
+    (data) => {
+      if (data.hasOwnLocation) {
+        return (
+          data.location?.street &&
+          data.location?.number &&
+          data.location?.neighborhood
+        );
+      }
+      return true;
+    },
+    {
+      message:
+        "O endereço completo é obrigatório se você atende em local próprio.",
+      path: ["location.street"],
+    },
+  )
+  .refine(
+    (data) => {
+      if (data.hasOwnLocation) {
+        return data.services.every(
+          (s) =>
+            typeof s.ownLocationPrice === "number" && s.ownLocationPrice > 0,
+        );
+      }
+      return true;
+    },
+    {
+      message:
+        "O preço para atendimento no local próprio é obrigatório para todos os serviços.",
+      path: ["services"],
+    },
+  );
 
 // =================================================================
 // TIPOS EXPORTADOS

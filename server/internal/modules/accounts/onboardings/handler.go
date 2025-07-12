@@ -52,15 +52,15 @@ func (h *onboardingsHandler) handleCompleteOnboarding(w http.ResponseWriter, r *
 		httphelpers.WriteJSON(w, apiErr.Code, apiErr)
 	}
 
-	if err := r.ParseMultipartForm(32 << 20); err != nil {
-		apiErr := exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, exceptions.ErrInvalidRequestBody)
-		httphelpers.WriteJSON(w, apiErr.Code, apiErr)
-		return
-	}
+	// if err := r.ParseMultipartForm(32 << 20); err != nil {
+	// 	apiErr := exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, exceptions.ErrInvalidRequestBody)
+	// 	httphelpers.WriteJSON(w, apiErr.Code, apiErr)
+	// 	return
+	// }
 
-	profileData := r.FormValue("profile")
+	profileData := r.FormValue("body")
 	if profileData == "" {
-		apiErr := exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, fmt.Errorf("profile data is required"))
+		apiErr := exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, fmt.Errorf("body data is required"))
 		httphelpers.WriteJSON(w, apiErr.Code, apiErr)
 		return
 	}
@@ -72,17 +72,10 @@ func (h *onboardingsHandler) handleCompleteOnboarding(w http.ResponseWriter, r *
 		return
 	}
 
-	if req.CategoryID == "" {
+	if req.SubcategoryID == "" {
 		apiErr := exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, fmt.Errorf("category_id is required"))
 		httphelpers.WriteJSON(w, apiErr.Code, apiErr)
 		return
-	}
-
-	if req.SubcategoryID == "" {
-		apiErr := exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, fmt.Errorf("subcategory_id is required"))
-		httphelpers.WriteJSON(w, apiErr.Code, apiErr)
-		return
-
 	}
 
 	req.UserID = c.UserID

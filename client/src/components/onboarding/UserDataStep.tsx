@@ -65,7 +65,11 @@ export const UserDataStep = () => {
             <div className="flex flex-col items-center gap-3">
               <Avatar className="w-24 h-24">
                 {imageUrl ? (
-                  <AvatarImage src={imageUrl} alt="Profile" />
+                  <AvatarImage
+                    src={imageUrl}
+                    alt="Profile"
+                    className="object-cover"
+                  />
                 ) : (
                   <AvatarFallback className="bg-conecta-gray text-gray-600 text-2xl">
                     <User className="w-8 h-8" />
@@ -90,7 +94,7 @@ export const UserDataStep = () => {
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-lg mb-2 text-gray-800">
-                Foto de Perfil
+                Foto de Perfil *
               </h3>
               <p className="text-gray-600 text-sm">
                 Adicione uma foto profissional que represente bem você e seu
@@ -123,8 +127,6 @@ export const UserDataStep = () => {
             {jobDescription.length}/{MAX_JOB_DESCRIPTION_CHARS} caracteres
           </div>
         </div>
-
-
       </div>
       <div className="space-y-2">
         <Label htmlFor="subcategory">Categoria *</Label>

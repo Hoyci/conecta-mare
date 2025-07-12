@@ -29,7 +29,6 @@ func (r *repository) CreateInitialProfileTx(ctx context.Context, tx *sqlx.Tx, us
  			id, 
 			user_id, 
 			full_name, 
-			category_id, 
 			subcategory_id,
 			profile_image,
 			job_description,
@@ -41,7 +40,6 @@ func (r *repository) CreateInitialProfileTx(ctx context.Context, tx *sqlx.Tx, us
 			:id, 
 			:user_id, 
 			:full_name,
-			:category_id,
 			:subcategory_id,
 		 	:profile_image,
 			:job_description,
@@ -80,7 +78,6 @@ func (r *repository) UpdateTx(ctx context.Context, tx *sqlx.Tx, userProfile *Use
 	query := `
 		UPDATE user_profiles SET
 			full_name = :full_name,
-			category_id = :category_id,
 			subcategory_id = :subcategory_id,
 			profile_image = :profile_image,
 			job_description = :job_description,

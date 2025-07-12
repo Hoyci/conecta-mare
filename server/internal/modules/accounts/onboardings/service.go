@@ -2,10 +2,12 @@ package onboardings
 
 import (
 	"conecta-mare-server/internal/common"
-	"conecta-mare-server/internal/modules/accounts/categories"
 	"conecta-mare-server/internal/modules/accounts/certifications"
+	"conecta-mare-server/internal/modules/accounts/locations"
 	"conecta-mare-server/internal/modules/accounts/projectimages"
 	"conecta-mare-server/internal/modules/accounts/projects"
+	"conecta-mare-server/internal/modules/accounts/serviceimages"
+	"conecta-mare-server/internal/modules/accounts/services"
 	"conecta-mare-server/internal/modules/accounts/subcategories"
 	"conecta-mare-server/internal/modules/accounts/userprofiles"
 	"conecta-mare-server/internal/modules/accounts/users"
@@ -28,8 +30,10 @@ func NewService(
 	projectsRepository projects.ProjectsRepository,
 	projectImagesRepository projectimages.ProjectImagesRepository,
 	certificationsRepository certifications.CertificationsRepository,
-	categoriesRepository categories.CategoriesRepository,
 	subcategoriesRepository subcategories.SubcategoriesRepository,
+	servicesRepository services.ServicesRepository,
+	serviceImagesRepository serviceimages.ServiceImagesRepository,
+	locationsRepository locations.LocationsRepository,
 	storage *storage.StorageClient,
 	logger *slog.Logger,
 ) OnboardingsService {
@@ -40,8 +44,10 @@ func NewService(
 		projectsRepository:       projectsRepository,
 		projectImagesRepository:  projectImagesRepository,
 		certificationsRepository: certificationsRepository,
-		categoriesRepository:     categoriesRepository,
 		subcategoriesRepository:  subcategoriesRepository,
+		serviceRepository:        servicesRepository,
+		serviceImagesRepository:  serviceImagesRepository,
+		locationRepository:       locationsRepository,
 		storage:                  storage,
 		logger:                   logger,
 	}
@@ -70,19 +76,13 @@ func (s *onboardingsService) MakeOnboarding(ctx context.Context, r *http.Request
 		s.logger.ErrorContext(ctx, "failed to verifiy if user profile already exists", "err", err)
 		return exceptions.MakeGenericApiError()
 	}
-	if userProfile != nil && userProfile.JobDescription() != nil {
+	if userProfile == nil {
+		s.logger.ErrorContext(ctx, "user profile for the given user was not found", "user_id", req.UserID)
+		return exceptions.MakeApiErrorWithStatus(http.StatusInternalServerError, fmt.Errorf("consistency error: user profile for user %s not found", req.UserID))
+	}
+	if userProfile.JobDescription() != nil {
 		s.logger.WarnContext(ctx, "onboarding already exists", "user_id", req.UserID)
 		return exceptions.MakeApiErrorWithStatus(http.StatusConflict, fmt.Errorf("onboarding already done"))
-	}
-
-	category, err := s.categoriesRepository.GetByID(ctx, req.CategoryID)
-	if err != nil {
-		s.logger.ErrorContext(ctx, "failed to verify if category exists", "category_id", req.CategoryID, "err", err)
-		return exceptions.MakeGenericApiError()
-	}
-	if category == nil {
-		s.logger.WarnContext(ctx, "category does not exists", "category_id", req.CategoryID)
-		return exceptions.MakeApiErrorWithStatus(http.StatusBadRequest, fmt.Errorf("category with category_id %s does not exists", req.CategoryID))
 	}
 
 	subcategory, err := s.subcategoriesRepository.GetByID(ctx, req.SubcategoryID)
@@ -127,7 +127,6 @@ func (s *onboardingsService) MakeOnboarding(ctx context.Context, r *http.Request
 	}
 
 	if err = userProfile.Update(
-		req.CategoryID,
 		req.SubcategoryID,
 		profileImageURL,
 		req.JobDescription,
@@ -150,6 +149,16 @@ func (s *onboardingsService) MakeOnboarding(ctx context.Context, r *http.Request
 
 	if err = s.createProjectsTx(ctx, tx, r, userProfile.UserID(), userProfile.ID(), req.Projects); err != nil {
 		s.logger.ErrorContext(ctx, "error while creating user projects", "err", err)
+		return exceptions.MakeGenericApiError()
+	}
+
+	if err = s.createServicesTx(ctx, tx, r, userProfile.UserID(), userProfile.ID(), req.Services); err != nil {
+		s.logger.ErrorContext(ctx, "error while creating user services", "err", err)
+		return exceptions.MakeGenericApiError()
+	}
+
+	if err = s.createLocationTx(ctx, tx, userProfile.ID(), &req.Location); err != nil {
+		s.logger.ErrorContext(ctx, "error while creating user location", "err", err)
 		return exceptions.MakeGenericApiError()
 	}
 
@@ -190,23 +199,23 @@ func (s *onboardingsService) createProjectsTx(
 	r *http.Request,
 	userID string,
 	userProfileID string,
-	prjs []common.Project,
+	pjts []common.Project,
 ) error {
-	for i := range prjs {
-		svc := &prjs[i]
-		svc.ID = uid.New("project")
+	for i := range pjts {
+		pjt := &pjts[i]
+		pjt.ID = uid.New("project")
 
-		imageWithIDs, err := s.uploadServiceImages(ctx, r, userID, svc.ID, i, svc.Name)
+		imageWithIDs, err := s.uploadProjectImages(ctx, r, userID, pjt.ID, i, pjt.Name)
 		if err != nil {
 			return err
 		}
 
 		for _, img := range imageWithIDs {
-			svc.Images = append(svc.Images, common.ProjectImageWithID{ID: img.ID, URL: img.URL, Ordering: img.Ordering})
+			pjt.Images = append(pjt.Images, common.ProjectImageWithID{ID: img.ID, URL: img.URL, Ordering: img.Ordering})
 		}
-		svc.Images = imageWithIDs
+		pjt.Images = imageWithIDs
 
-		if err := s.createServiceAndImages(ctx, tx, svc, userProfileID); err != nil {
+		if err := s.createProjectAndImages(ctx, tx, pjt, userProfileID); err != nil {
 			return err
 		}
 	}
@@ -214,7 +223,37 @@ func (s *onboardingsService) createProjectsTx(
 	return nil
 }
 
-func (s *onboardingsService) uploadServiceImages(
+func (s *onboardingsService) createServicesTx(
+	ctx context.Context,
+	tx *sqlx.Tx,
+	r *http.Request,
+	userID string,
+	userProfileID string,
+	services []common.Service,
+) error {
+	for i := range services {
+		service := &services[i]
+		service.ID = uid.New("service")
+
+		imageWithIDs, err := s.uploadServiceImages(ctx, r, userID, service.ID, i, service.Name)
+		if err != nil {
+			return err
+		}
+
+		for _, img := range imageWithIDs {
+			service.Images = append(service.Images, common.ServiceImageWithID{ID: img.ID, URL: img.URL, Ordering: img.Ordering})
+		}
+		service.Images = imageWithIDs
+
+		if err := s.createServiceAndImages(ctx, tx, service, userProfileID); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *onboardingsService) uploadProjectImages(
 	ctx context.Context,
 	r *http.Request,
 	userID, projectID string,
@@ -248,7 +287,41 @@ func (s *onboardingsService) uploadServiceImages(
 	return result, nil
 }
 
-func (s *onboardingsService) createServiceAndImages(
+func (s *onboardingsService) uploadServiceImages(
+	ctx context.Context,
+	r *http.Request,
+	userID, serviceID string,
+	index int,
+	serviceName string,
+) ([]common.ServiceImageWithID, error) {
+	formField := fmt.Sprintf("services[%d].images", index)
+	files, ok := r.MultipartForm.File[formField]
+	if !ok || len(files) == 0 {
+		s.logger.InfoContext(ctx, "no service images found", "service", serviceName, "field", formField)
+		return nil, nil
+	}
+
+	var result []common.ServiceImageWithID
+	for _, file := range files {
+		imageID := uid.New("service_img")
+		objectName := fmt.Sprintf("services/%s/%s/%s", userID, serviceID, imageID)
+
+		url, err := s.storage.UploadFile(objectName, file)
+		if err != nil {
+			s.logger.ErrorContext(ctx, "failed to upload service image", "project", serviceName, "err", err)
+			return nil, exceptions.MakeGenericApiError()
+		}
+
+		result = append(result, common.ServiceImageWithID{
+			ID:  imageID,
+			URL: url,
+		})
+	}
+
+	return result, nil
+}
+
+func (s *onboardingsService) createProjectAndImages(
 	ctx context.Context,
 	tx *sqlx.Tx,
 	prj *common.Project,
@@ -256,25 +329,83 @@ func (s *onboardingsService) createServiceAndImages(
 ) error {
 	project, err := projects.New(prj.ID, userProfileID, prj.Name, prj.Description)
 	if err != nil {
-		s.logger.ErrorContext(ctx, "error creating service entity", "err", err)
+		s.logger.ErrorContext(ctx, "error creating project entity", "err", err)
 		return exceptions.MakeApiErrorWithStatus(http.StatusUnprocessableEntity, fmt.Errorf("error creating service entity"))
 	}
 
 	if err := s.projectsRepository.CreateTx(tx, project); err != nil {
-		s.logger.ErrorContext(ctx, "failed to insert service", "service_id", prj.ID)
+		s.logger.ErrorContext(ctx, "failed to insert project", "project_id", prj.ID)
 		return exceptions.MakeGenericApiError()
 	}
 
 	for i, img := range prj.Images {
-		serviceImg, err := projectimages.New(img.ID, prj.ID, img.URL, i)
+		projectImg, err := projectimages.New(img.ID, prj.ID, img.URL, i)
 		if err != nil {
 			s.logger.ErrorContext(ctx, "error creating project image entity", "err", err)
 			return exceptions.MakeApiErrorWithStatus(http.StatusUnprocessableEntity, fmt.Errorf("error creating project image entity"))
 		}
-		if err := s.projectImagesRepository.CreateTx(tx, serviceImg); err != nil {
+		if err := s.projectImagesRepository.CreateTx(tx, projectImg); err != nil {
 			s.logger.ErrorContext(ctx, "failed to insert project image", "err", err)
 			return exceptions.MakeGenericApiError()
 		}
+	}
+
+	return nil
+}
+
+func (s *onboardingsService) createServiceAndImages(
+	ctx context.Context,
+	tx *sqlx.Tx,
+	svc *common.Service,
+	userProfileID string,
+) error {
+	service, err := services.New(svc.ID, userProfileID, svc.Name, svc.Description, svc.Price, svc.OwnLocationPrice)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "error creating service entity", "err", err)
+		return exceptions.MakeApiErrorWithStatus(http.StatusUnprocessableEntity, fmt.Errorf("error creating service entity"))
+	}
+
+	if err := s.serviceRepository.CreateTx(tx, service); err != nil {
+		s.logger.ErrorContext(ctx, "failed to insert service", "service_id", svc.ID)
+		return exceptions.MakeGenericApiError()
+	}
+
+	for i, img := range svc.Images {
+		serviceImg, err := serviceimages.New(img.ID, svc.ID, img.URL, i)
+		if err != nil {
+			s.logger.ErrorContext(ctx, "error creating service image entity", "err", err)
+			return exceptions.MakeApiErrorWithStatus(http.StatusUnprocessableEntity, fmt.Errorf("error creating project image entity"))
+		}
+		if err := s.serviceImagesRepository.CreateTx(tx, serviceImg); err != nil {
+			s.logger.ErrorContext(ctx, "failed to insert service image", "err", err)
+			return exceptions.MakeGenericApiError()
+		}
+	}
+
+	return nil
+}
+
+func (s *onboardingsService) createLocationTx(
+	ctx context.Context,
+	tx *sqlx.Tx,
+	userProfileID string,
+	loc *common.Location,
+) error {
+	location, err := locations.New(
+		userProfileID,
+		loc.Street,
+		loc.Number,
+		loc.Complement,
+		loc.Neighborhood,
+	)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "error creating location entity", "err", err)
+		return exceptions.MakeApiErrorWithStatus(http.StatusUnprocessableEntity, fmt.Errorf("error creating location entity"))
+	}
+
+	if err := s.locationRepository.CreateTx(tx, location); err != nil {
+		s.logger.ErrorContext(ctx, "failed to insert location", "user_profile_id", userProfileID)
+		return exceptions.MakeGenericApiError()
 	}
 
 	return nil

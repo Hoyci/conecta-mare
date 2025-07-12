@@ -5,9 +5,12 @@ import (
 	"conecta-mare-server/internal/database"
 	"conecta-mare-server/internal/modules/accounts/categories"
 	"conecta-mare-server/internal/modules/accounts/certifications"
+	"conecta-mare-server/internal/modules/accounts/locations"
 	"conecta-mare-server/internal/modules/accounts/onboardings"
 	"conecta-mare-server/internal/modules/accounts/projectimages"
 	"conecta-mare-server/internal/modules/accounts/projects"
+	"conecta-mare-server/internal/modules/accounts/serviceimages"
+	"conecta-mare-server/internal/modules/accounts/services"
 	"conecta-mare-server/internal/modules/accounts/session"
 	"conecta-mare-server/internal/modules/accounts/subcategories"
 	"conecta-mare-server/internal/modules/accounts/userprofiles"
@@ -101,6 +104,9 @@ func main() {
 	certificationsRepo := certifications.NewRepository(db.DB())
 	projectsRepo := projects.NewRepository(db.DB())
 	projectImagesRepo := projectimages.NewRepository(db.DB())
+	servicesRepo := services.NewRepository(db.DB())
+	serviceImagesRepo := serviceimages.NewRepository(db.DB())
+	locationsRepo := locations.NewRepository(db.DB())
 
 	sessionsService := session.NewService(sessionsRepo, logger)
 	subcategoriesService := subcategories.NewService(subcategoriesRepo, logger)
@@ -121,8 +127,10 @@ func main() {
 		projectsRepo,
 		projectImagesRepo,
 		certificationsRepo,
-		categoriesRepo,
 		subcategoriesRepo,
+		servicesRepo,
+		serviceImagesRepo,
+		locationsRepo,
 		storageClient,
 		logger,
 	)

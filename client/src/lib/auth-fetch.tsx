@@ -7,18 +7,20 @@ export const authFetch = async (input: RequestInfo, init: RequestInit = {}) => {
   const store = getCurrentAuthStore();
   let accessToken = store.accessToken;
 
-  console.log("access_token", accessToken)
-
   const doFetch = async (token: string) => {
     const headers = new Headers(init.headers);
     headers.set("Authorization", `Bearer ${token}`);
-    if (init.body && !headers.has("Content-Type")) {
+    if (
+      init.body &&
+      !headers.has("Content-Type") &&
+      !(init.body instanceof FormData)
+    ) {
       headers.set("Content-Type", "application/json");
     }
+
     return fetch(input, {
       ...init,
       headers,
-      credentials: "include",
     });
   };
 

@@ -128,4 +128,35 @@ type (
 		StartDate   time.Time  `json:"start_date" db:"start_date"`
 		EndDate     *time.Time `json:"end_date" db:"end_date"`
 	}
+
+	Service struct {
+		ID               string               `json:"id" db:"id"`
+		UserProfileID    string               `json:"user_profile_id" db:"user_profile_id"`
+		Name             string               `json:"name" db:"name"`
+		Description      string               `json:"description" db:"description"`
+		Price            int                  `json:"price" db:"price"`
+		OwnLocationPrice *int                 `json:"own_location_price" db:"own_location_price"`
+		CreatedAt        time.Time            `json:"created_at" db:"created_at"`
+		UpdatedAt        *time.Time           `json:"updated_at" db:"updated_at"`
+		DeletedAt        *time.Time           `json:"deleted_at" db:"deleted_at"`
+		Images           []ServiceImageWithID `json:"images" db:"images"`
+	}
+
+	ServiceImageWithID struct {
+		ID       string `json:"id" db:"id"`
+		URL      string `json:"url" db:"url"`
+		Ordering int    `json:"ordering" db:"ordering"`
+	}
+
+	Location struct {
+		ID            string     `json:"id" db:"id"`
+		UserProfileID string     `json:"user_profile_id" db:"user_profile_id"`
+		Street        string     `json:"street" db:"street"`
+		Number        string     `json:"number" db:"number"`
+		Complement    string     `json:"complement" db:"complement"`
+		Neighborhood  string     `json:"neighborhood" db:"neighborhood"`
+		CreatedAt     time.Time  `json:"created_at" db:"created_at"`
+		UpdatedAt     *time.Time `json:"updated_at,omitempty" db:"updated_at"`
+		DeletedAt     *time.Time `json:"deleted_at,omitempty" db:"deleted_at"`
+	}
 )

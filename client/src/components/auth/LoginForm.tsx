@@ -20,7 +20,7 @@ const LoginForm = () => {
 
   const methods = useForm<LoginValues>({
     resolver: zodResolver(LoginSchema),
-    mode: "onChange",
+    mode: "onSubmit",
     defaultValues: {
       rememberMe: false,
     },

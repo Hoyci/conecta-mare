@@ -1,6 +1,7 @@
 import { useFormContext, useFieldArray } from "react-hook-form";
 import {
   MAX_PROJECT_IMAGES,
+  MAX_PROJECT_DESCRIPTION_CHARS,
   ProfessionalProfile,
   ProjectImage,
 } from "@/types/user";
@@ -71,8 +72,10 @@ export const ProjectStep = () => {
 };
 
 export const ProjectCard = ({ index, onRemove }: ProjectCardProps) => {
-  const { register, formState } = useFormContext<ProfessionalProfile>();
+  const { register, formState, watch } = useFormContext<ProfessionalProfile>();
   const errors = formState.errors;
+
+  const [projects] = watch(["projects"]);
 
   const handleRemoveProject = useCallback(() => {
     onRemove();
@@ -108,21 +111,29 @@ export const ProjectCard = ({ index, onRemove }: ProjectCardProps) => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor={`projects.${index}.description`}>Descrição *</Label>
+        <Label htmlFor="description">Descrição sobre o projeto *</Label>
         <Textarea
           id={`projects.${index}.description`}
-          placeholder="Descreva detalhadamente..."
+          maxLength={MAX_PROJECT_DESCRIPTION_CHARS}
+          placeholder="Descreva detalhadamente seu projeto..."
           {...register(`projects.${index}.description`)}
           className={cn(
             "min-h-[120px]",
             errors.projects?.[index]?.description && "border-red-500",
           )}
         />
-        {errors.projects?.[index]?.description && (
-          <p className="text-red-500 text-xs mt-1">
-            {errors.projects[index]?.description?.message}
-          </p>
-        )}
+        <div className="flex items-center">
+          {errors.projects?.[index]?.description && (
+            <p className="text-red-500 text-xs mt-1">
+              {errors.projects[index]?.description?.message}
+            </p>
+          )}
+
+          <div className="ml-auto text-xs text-gray-500">
+            {projects[index].description.length}/{MAX_PROJECT_DESCRIPTION_CHARS}{" "}
+            caracteres
+          </div>
+        </div>
       </div>
 
       <ProjectImageUpload index={index} />
@@ -179,7 +190,7 @@ export const ProjectImageUpload = ({ index }: ProjectImageUploadProps) => {
             Clique para carregar fotos do projeto
           </p>
           <p className="text-sm text-gray-500">
-            PNG, JPG até 5MB cada (máximo  {MAX_PROJECT_IMAGES} fotos)
+            PNG, JPG até 5MB cada (máximo {MAX_PROJECT_IMAGES} fotos)
           </p>
         </div>
         <input
