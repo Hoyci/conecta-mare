@@ -53,7 +53,11 @@ func NewService(
 	}
 }
 
-func (s *onboardingsService) MakeOnboarding(ctx context.Context, r *http.Request, req *common.OnboardingRequest) error {
+func (s *onboardingsService) MakeOnboarding(
+	ctx context.Context,
+	r *http.Request,
+	req *common.OnboardingRequest,
+) error {
 	s.logger.InfoContext(ctx, "starting onboarding process", "user_id", req.UserID)
 
 	user, err := s.usersRepository.GetByID(ctx, req.UserID)
@@ -152,7 +156,14 @@ func (s *onboardingsService) MakeOnboarding(ctx context.Context, r *http.Request
 		return exceptions.MakeGenericApiError()
 	}
 
-	if err = s.createServicesTx(ctx, tx, r, userProfile.UserID(), userProfile.ID(), req.Services); err != nil {
+	if err = s.createServicesTx(
+		ctx,
+		tx,
+		r,
+		userProfile.UserID(),
+		userProfile.ID(),
+		req.Services,
+	); err != nil {
 		s.logger.ErrorContext(ctx, "error while creating user services", "err", err)
 		return exceptions.MakeGenericApiError()
 	}
@@ -229,7 +240,7 @@ func (s *onboardingsService) createServicesTx(
 	r *http.Request,
 	userID string,
 	userProfileID string,
-	services []common.Service,
+	services []common.OnboardingService,
 ) error {
 	for i := range services {
 		service := &services[i]
@@ -356,7 +367,7 @@ func (s *onboardingsService) createProjectAndImages(
 func (s *onboardingsService) createServiceAndImages(
 	ctx context.Context,
 	tx *sqlx.Tx,
-	svc *common.Service,
+	svc *common.OnboardingService,
 	userProfileID string,
 ) error {
 	service, err := services.New(svc.ID, userProfileID, svc.Name, svc.Description, svc.Price, svc.OwnLocationPrice)
@@ -389,7 +400,7 @@ func (s *onboardingsService) createLocationTx(
 	ctx context.Context,
 	tx *sqlx.Tx,
 	userProfileID string,
-	loc *common.Location,
+	loc *common.OnboardingLocation,
 ) error {
 	location, err := locations.New(
 		userProfileID,

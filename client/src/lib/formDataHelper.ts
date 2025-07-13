@@ -8,6 +8,8 @@ export const createOnboardingFormData = (
 
   const payload = JSON.parse(JSON.stringify(toSnakeCase(data)));
 
+  console.log("payload", payload)
+
   if (payload.profile_image) {
     delete payload.profile_image;
   }
@@ -61,8 +63,6 @@ export const createOnboardingFormData = (
       }
     });
   }
-
-  console.log("FormData a ser enviado:", Array.from(formData.entries()));
 
   return formData;
 };

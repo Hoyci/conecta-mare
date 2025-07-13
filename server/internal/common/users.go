@@ -41,10 +41,10 @@ type (
 		ID              string            `json:"id" db:"id"`
 		Email           string            `json:"email" db:"email"`
 		Role            valueobjects.Role `json:"role" db:"role"`
-		FullName        string            `json:"full_name" db:"full_name"`
-		ProfileImage    string            `json:"profile_image" db:"profile_image"`
-		JobDescription  string            `json:"job_description" db:"job_description"`
-		SubcategoryName string            `json:"subcategory_name" db:"name"`
+		FullName        *string           `json:"full_name" db:"full_name"`
+		ProfileImage    *string           `json:"profile_image" db:"profile_image"`
+		JobDescription  *string           `json:"job_description" db:"job_description"`
+		SubcategoryName *string           `json:"subcategory_name" db:"name"`
 	}
 
 	RegisterUserRequest struct {
@@ -88,6 +88,7 @@ type (
 		CertificationsJSON JSONB   `db:"certifications"`
 		Rating             int     `db:"rating"`
 		Location           string  `db:"location"`
+		ServicesJSON       JSONB   `db:"services"`
 	}
 
 	GetProfessionalByIDResponse struct {
@@ -98,12 +99,12 @@ type (
 		JobDescription  string          `json:"job_description" db:"job_description"`
 		Phone           string          `json:"phone" db:"phone"`
 		SocialLinks     JSONMap         `json:"social_links" db:"social_links"`
-		CategoryName    string          `json:"category_name" db:"category_name"`
 		SubcategoryName string          `json:"subcategory_name" db:"subcategory_name"`
 		Rating          int             `json:"rating" db:"location"`
 		Location        string          `json:"location" db:"location"`
 		Projects        []Project       `json:"projects" db:"projects"`
 		Certifications  []Certification `json:"certifications" db:"certifications"`
+		Services        []Service       `json:"services" db:"services"`
 	}
 
 	Project struct {
@@ -127,15 +128,10 @@ type (
 	}
 
 	Service struct {
-		ID               string               `json:"id" db:"id"`
-		UserProfileID    string               `json:"user_profile_id" db:"user_profile_id"`
 		Name             string               `json:"name" db:"name"`
 		Description      string               `json:"description" db:"description"`
 		Price            int                  `json:"price" db:"price"`
 		OwnLocationPrice *int                 `json:"own_location_price" db:"own_location_price"`
-		CreatedAt        time.Time            `json:"created_at" db:"created_at"`
-		UpdatedAt        *time.Time           `json:"updated_at" db:"updated_at"`
-		DeletedAt        *time.Time           `json:"deleted_at" db:"deleted_at"`
 		Images           []ServiceImageWithID `json:"images" db:"images"`
 	}
 
@@ -146,14 +142,9 @@ type (
 	}
 
 	Location struct {
-		ID            string     `json:"id" db:"id"`
-		UserProfileID string     `json:"user_profile_id" db:"user_profile_id"`
-		Street        string     `json:"street" db:"street"`
-		Number        string     `json:"number" db:"number"`
-		Complement    string     `json:"complement" db:"complement"`
-		Neighborhood  string     `json:"neighborhood" db:"neighborhood"`
-		CreatedAt     time.Time  `json:"created_at" db:"created_at"`
-		UpdatedAt     *time.Time `json:"updated_at,omitempty" db:"updated_at"`
-		DeletedAt     *time.Time `json:"deleted_at,omitempty" db:"deleted_at"`
+		Street       string `json:"street" db:"street"`
+		Number       string `json:"number" db:"number"`
+		Complement   string `json:"complement" db:"complement"`
+		Neighborhood string `json:"neighborhood" db:"neighborhood"`
 	}
 )
