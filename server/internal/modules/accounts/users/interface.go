@@ -17,7 +17,7 @@ import (
 type (
 	UsersRepository interface {
 		Register(ctx context.Context, tx *sqlx.Tx, user *User) error
-		GetByID(ctx context.Context, ID string) (*models.User, error)
+		GetByID(ctx context.Context, ID string) (*common.User, error)
 		GetByEmail(ctx context.Context, email string) (*models.User, error)
 		GetByRole(ctx context.Context, role string) ([]*models.User, error)
 		CountBySubcategoryIDs(ctx context.Context, subcategoryIDs []string) (map[string]int, error)
@@ -30,7 +30,7 @@ type (
 		Login(ctx context.Context, input common.LoginUserRequest) (*common.LoginUserResponse, *exceptions.ApiError[string])
 		Logout(ctx context.Context) *exceptions.ApiError[string]
 		Register(ctx context.Context, input common.RegisterUserRequest) error
-		GetSigned(ctx context.Context) (*User, *exceptions.ApiError[string])
+		GetSigned(ctx context.Context) (*common.User, *exceptions.ApiError[string])
 		CountUsersBySubcategoryIDs(ctx context.Context, subcategoryIDs []string) (map[string]int, error)
 		GetByID(ctx context.Context, ID string) (*User, error)
 		GetByEmail(ctx context.Context, email string) (*User, error)

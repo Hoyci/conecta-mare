@@ -61,12 +61,27 @@ func (ur *usersRepository) GetByEmail(ctx context.Context, email string) (*model
 	return &user, nil
 }
 
-func (ur *usersRepository) GetByID(ctx context.Context, ID string) (*models.User, error) {
+func (ur *usersRepository) GetByID(ctx context.Context, ID string) (*common.User, error) {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	var user models.User
-	err := ur.db.GetContext(ctx, &user, "SELECT * FROM users WHERE id = $1", ID)
+	query := `
+		SELECT 
+			u.id,
+			u.email,
+			u.role,
+			up.full_name,
+			up.profile_image,
+			up.job_description,
+			subc."name"
+		FROM users u
+		INNER JOIN user_profiles up ON up.user_id = u.id
+		INNER JOIN subcategories subc ON subc.id = up.subcategory_id
+		WHERE u.id = $1 
+	`
+
+	var user common.User
+	err := ur.db.GetContext(ctx, &user, query, ID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil

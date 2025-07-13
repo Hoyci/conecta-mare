@@ -38,12 +38,13 @@ func (j JSONB) Unmarshal(v interface{}) error {
 
 type (
 	User struct {
-		ID            string            `json:"id"`
-		Name          string            `json:"name"`
-		Email         string            `json:"email"`
-		Role          valueobjects.Role `json:"role"`
-		AvatarURL     string            `json:"avatar_url"`
-		SubcategoryID *string           `json:"subcategory_id,omitempty"`
+		ID              string            `json:"id" db:"id"`
+		Email           string            `json:"email" db:"email"`
+		Role            valueobjects.Role `json:"role" db:"role"`
+		FullName        string            `json:"full_name" db:"full_name"`
+		ProfileImage    string            `json:"profile_image" db:"profile_image"`
+		JobDescription  string            `json:"job_description" db:"job_description"`
+		SubcategoryName string            `json:"subcategory_name" db:"name"`
 	}
 
 	RegisterUserRequest struct {
@@ -62,10 +63,6 @@ type (
 	LoginUserResponse struct {
 		AccessToken  *string `json:"access_token"`
 		RefreshToken *string `json:"refresh_token"`
-	}
-
-	UserResponse struct {
-		User *User `json:"user"`
 	}
 
 	GetProfessionalsResponse struct {

@@ -25,7 +25,9 @@ import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar, Edit, StarIcon } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { startCase, camelCase } from "lodash-es";
-import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton"; // 1. Importe o skeleton
+import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
+import { getSignedUser } from "@/services/user-service";
+import { useQuery } from "@tanstack/react-query";
 
 const mockProfile = {
   name: "Juliana Silva",
@@ -54,16 +56,21 @@ const benchmarks = [
 ];
 
 const Dashboard = () => {
-  const { user } = useAuth();
   const [tab, setTab] = useState("overview");
 
-  console.log("user", user)
 
-  if (!user) {
+  const { data: userData = {} } = useQuery({
+    queryKey: ['userData'],
+    queryFn: getSignedUser
+  })
+
+  if (!userData.id) {
     return <DashboardSkeleton />;
   }
 
+
   return (
+
     <div className="min-h-screen flex flex-col bg-conecta-gray">
       <Navbar />
       <main className="flex-grow py-6">
@@ -73,27 +80,30 @@ const Dashboard = () => {
               <div className="flex flex-col py-4 md:flex-row md:items-end px-6 relative">
                 <div className="w-full flex flex-col gap-4">
                   <div className="flex flex-row">
-                    <Avatar className="w-24 h-24 border-2 border-conecta-blue-dark rounded-full shadow-lg">
-                      <AvatarImage src={user.profileImage} />
-                      <AvatarFallback className="bg-conecta-blue text-white text-2xl font-bold">
-                        {user.email.charAt(0)}
-                      </AvatarFallback>
+                    <Avatar className="w-24 h-24 border-2 rounded-full shadow-lg">
+                      {userData.profileImage ?
+                        <AvatarImage src={userData.profileImage} />
+                        :
+                        <AvatarFallback className="bg-conecta-blue text-white text-2xl font-bold">
+                          {userData.fullName.charAt(0)}
+                        </AvatarFallback>
+                      }
                     </Avatar>
 
                     <div className="mt-4 md:ml-6 md:mt-0 pb-4">
                       <div className="flex items-center">
                         <h1 className="text-2xl font-bold">
-                          {startCase(camelCase(user.email))}
+                          {startCase(camelCase(userData.fullName))}
                         </h1>
                         <span className="ml-3 bg-conecta-green-light text-conecta-green-dark text-xs px-2 py-1 rounded-full font-medium">
                           Verificado
                         </span>
                       </div>
                       <p className="text-conecta-blue font-semibold flex items-center">
-                        {user.subcategoryName}
+                        {userData.subcategoryName}
                       </p>
                       <p className="text-gray-600 mt-1">
-                        {mockProfile.description}
+                        {userData.jobDescription}
                       </p>
                     </div>
 
@@ -411,7 +421,8 @@ const Dashboard = () => {
               </Card>
             </TabsContent>
 
-            {/* Comparativo */}
+            {/* Comparativo  */
+            }
             <TabsContent value="comparativo" className="space-y-6">
               <Card className="border-none shadow-md">
                 <CardContent className="p-6">

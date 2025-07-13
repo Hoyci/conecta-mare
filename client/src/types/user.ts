@@ -1,10 +1,11 @@
 import { z } from "zod";
+import { SubcategorySchema } from "./categories";
 
 // =================================================================
 // CONSTANTES E TIPOS BASE
 // =================================================================
 
-const FileListClass = typeof FileList !== "undefined" ? FileList : class {};
+const FileListClass = typeof FileList !== "undefined" ? FileList : class { };
 const ROLES = ["client", "professional"] as const;
 const DATE_SCHEMA = z.date().nullable();
 
@@ -236,6 +237,19 @@ export const OnboardingRequestSchema = z
     },
   );
 
+const { fullName, profileImage, jobDescription } = UserProfileSchema.shape;
+const { name: subcategoryName } = SubcategorySchema.shape;
+
+export const GetUserResponseSchema = BaseUserSchema.pick({
+  id: true,
+  email: true,
+  role: true,
+}).extend({
+  fullName: fullName,
+  profileImage: profileImage,
+  jobDescription: jobDescription,
+  subcategoryName: subcategoryName,
+});
 // =================================================================
 // TIPOS EXPORTADOS
 // =================================================================
@@ -256,3 +270,6 @@ export type LoginValues = z.infer<typeof LoginSchema>;
 
 // --- Tipo para o formulário de onboarding ---
 export type OnboardingRequestValues = z.infer<typeof OnboardingRequestSchema>;
+
+// --- Tipo de resposta de request ---
+export type GetUserResponse = z.infer<typeof GetUserResponseSchema>;

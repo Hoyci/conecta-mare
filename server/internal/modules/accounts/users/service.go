@@ -209,13 +209,23 @@ func (s *userService) Logout(ctx context.Context) *exceptions.ApiError[string] {
 	return nil
 }
 
-func (s *userService) GetSigned(ctx context.Context) (*User, *exceptions.ApiError[string]) {
+func (s *userService) GetSigned(ctx context.Context) (*common.User, *exceptions.ApiError[string]) {
 	s.logger.InfoContext(ctx, "attempting to logout user")
 
 	c, ok := ctx.Value(middlewares.AuthKey{}).(*jwt.Claims)
 	if !ok {
 		s.logger.ErrorContext(ctx, "error while attempting to get auth values from context")
 		return nil, exceptions.MakeApiErrorWithStatus(http.StatusUnauthorized, exceptions.ErrUnauthorized)
+	}
+
+	userSession, err := s.sessionService.GetActiveSessionByUserID(ctx, c.UserID)
+	if err != nil {
+		s.logger.ErrorContext(ctx, "error whilhe attempting to get user session", "user_id", c.UserID, "err", err)
+		return nil, exceptions.MakeGenericApiError()
+	}
+	if userSession == nil {
+		s.logger.WarnContext(ctx, "session not found", "user_id", c.UserID)
+		return nil, exceptions.MakeApiErrorWithStatus(http.StatusUnauthorized, exceptions.ErrActiveSessionNotFound)
 	}
 
 	user, err := s.repository.GetByID(ctx, c.UserID)
@@ -229,17 +239,7 @@ func (s *userService) GetSigned(ctx context.Context) (*User, *exceptions.ApiErro
 		return nil, exceptions.MakeApiErrorWithStatus(http.StatusNotFound, exceptions.ErrUserNotFound)
 	}
 
-	userSession, err := s.sessionService.GetActiveSessionByUserID(ctx, c.UserID)
-	if err != nil {
-		s.logger.ErrorContext(ctx, "error whilhe attempting to get user session", "user_id", user.ID, "err", err)
-		return nil, exceptions.MakeGenericApiError()
-	}
-	if userSession == nil {
-		s.logger.WarnContext(ctx, "session not found", "user_id", user.ID)
-		return nil, exceptions.MakeApiErrorWithStatus(http.StatusUnauthorized, exceptions.ErrActiveSessionNotFound)
-	}
-
-	return NewFromModel(*user), nil
+	return user, nil
 }
 
 func (s *userService) CountUsersBySubcategoryIDs(ctx context.Context, subcategoryIDs []string) (map[string]int, error) {

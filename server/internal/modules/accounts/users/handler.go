@@ -157,13 +157,7 @@ func (h userHandler) handleGetSigned(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httphelpers.WriteJSON(w, http.StatusOK, &common.UserResponse{
-		User: &common.User{
-			ID:    user.ID(),
-			Email: user.Email(),
-			Role:  user.Role(),
-		},
-	})
+	httphelpers.WriteJSON(w, http.StatusOK, user)
 }
 
 func (h userHandler) handleGetProfessionals(w http.ResponseWriter, r *http.Request) {
