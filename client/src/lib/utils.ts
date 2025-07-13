@@ -10,16 +10,21 @@ export function toSnakeCase(obj: Record<string, any>): Record<string, any> {
   return Object.entries(obj).reduce(
     (acc, [key, value]) => {
       const snakeKey = snakeCase(key);
-      if (
+
+      if (Array.isArray(value)) {
+        acc[snakeKey] = value.map((item) =>
+          typeof item === "object" && item !== null ? toSnakeCase(item) : item,
+        );
+      } else if (
         value &&
         typeof value === "object" &&
-        !Array.isArray(value) &&
         !(value instanceof Date)
       ) {
         acc[snakeKey] = toSnakeCase(value);
       } else {
         acc[snakeKey] = value;
       }
+
       return acc;
     },
     {} as Record<string, any>,
@@ -56,4 +61,8 @@ export function formatCentsToBRL(cents: number): string {
     style: "currency",
     currency: "BRL",
   });
+}
+
+export function parseBRLToCents(value: number): number {
+  return Math.round(value * 100);
 }

@@ -28,22 +28,20 @@ export const getProfessionals = async () => {
 export const getProfessionalByID = async (userID: string) => {
   const apiUrl = `${env.data.VITE_API_URL}/api/v1/users/professionals/${userID}`;
 
-  const res = await fetch(apiUrl, {
+  const response = await fetch(apiUrl, {
     method: "GET",
   });
 
-  if (!res.ok) {
-    const erroData = await res.json().catch((error: Error) => error);
-    throw new Error(erroData);
+  if (!response.ok) {
+    const errorData = await response
+      .json()
+      .catch(() => ({ message: "Erro desconhecido ao requisitar dados do profissional" }));
+    throw new Error(errorData.message || "Falha ao requisitar dados do profissional.");
   }
 
-  const rawData = await res.json();
+  const rawData = await response.json();
 
-  const camelizedDada: { data: ProfessionalProfile } = {
-    data: toCamelCase(rawData.data),
-  };
-
-  return camelizedDada;
+  return toCamelCase(rawData.data)
 };
 
 export const submitOnboardingProfile = async (

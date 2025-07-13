@@ -250,6 +250,22 @@ export const GetUserResponseSchema = BaseUserSchema.pick({
   jobDescription: jobDescription,
   subcategoryName: subcategoryName,
 });
+
+export const ProfessionalUserResponseSchema = BaseUserSchema.pick({
+  id: true,
+  email: true,
+  role: true,
+}).extend({
+  fullName: z.string(),
+  profileImage: z.string().url(),
+  jobDescription: z.string(),
+  subcategoryName: z.string(),
+  rating: z.number(),
+  location: z.string().optional(),
+  certifications: z.array(CertificationSchema).optional(),
+  projects: z.array(ProjectSchema).optional(),
+  services: z.array(ServiceSchema).optional(),
+});
 // =================================================================
 // TIPOS EXPORTADOS
 // =================================================================
@@ -273,3 +289,4 @@ export type OnboardingRequestValues = z.infer<typeof OnboardingRequestSchema>;
 
 // --- Tipo de resposta de request ---
 export type GetUserResponse = z.infer<typeof GetUserResponseSchema>;
+export type ProfessionalUserResponse = z.infer<typeof ProfessionalUserResponseSchema>;
