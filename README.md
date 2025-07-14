@@ -66,7 +66,7 @@ Essa arquitetura garante uma clara separação de responsabilidades, escalabilid
 1.  **Clone o repositório:**
     ```bash
     git clone https://github.com/Hoyci/conecta-mare
-    cd seu-repo
+    cd conecta-mare
     ```
 
 2.  **Execute o script de setup do ambiente:**
