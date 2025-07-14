@@ -65,7 +65,7 @@ Essa arquitetura garante uma clara separação de responsabilidades, escalabilid
 
 1.  **Clone o repositório:**
     ```bash
-    git clone [https://github.com/seu-usuario/seu-repo.git](https://github.com/seu-usuario/seu-repo.git)
+    git clone [https://github.com/Hoyci/conecta-mare.git](https://github.com/Hoyci/conecta-mare.git)
     cd seu-repo
     ```
 
