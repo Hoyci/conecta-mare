@@ -34,6 +34,19 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - application-net
+  
+  redis:
+    image: redis:7-alpine
+    container_name: conectamare-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - application-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
 volumes:
   postgres_volume:

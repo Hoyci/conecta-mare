@@ -1,5 +1,17 @@
 services:
-  # --- Serviço do Banco de Dados ---
+  redis:
+    image: redis:7-alpine
+    container_name: conectamare-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - conectamare-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
   db:
     image: postgres:15-alpine
     container_name: conectamare-db
@@ -21,7 +33,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # --- Serviço do S3 (LocalStack) ---
   localstack:
     image: localstack/localstack:latest
     container_name: conectamare-localstack
@@ -35,12 +46,10 @@ services:
     networks:
       - conectamare-net
 
-  # --- SERVIÇO DE MIGRAÇÃO ---
   migrate:
     build:
       context: ./server
       dockerfile: Dockerfile
-      # CORREÇÃO: Usa o estágio 'build' do Dockerfile, que contém o Go.
       target: build
     container_name: conectamare-migrate
     env_file:
@@ -52,7 +61,6 @@ services:
       db:
         condition: service_healthy
 
-  # --- Serviço da API em Go (Backend) ---
   server:
     build:
       context: ./server
@@ -69,8 +77,9 @@ services:
         condition: service_completed_successfully
       localstack:
         condition: service_started
+      redis:
+        condition: service_healthy
 
-  # --- Serviço do Frontend (React SSR com Node.js) ---
   client:
     build:
       context: ./client
@@ -87,7 +96,6 @@ services:
     depends_on:
       - server
 
-  # --- Serviço NGINX (Proxy Reverso e Servidor de Assets) ---
   nginx:
     build:
       context: .
@@ -103,12 +111,10 @@ services:
       - server
       - client
 
-# Define a rede interna e privada
 networks:
   conectamare-net:
     driver: bridge
 
-# Define os volumes para persistência e para o build do React
 volumes:
   postgres_data:
   localstack_data:
