@@ -24,6 +24,9 @@ type Config struct {
 	DBPort     string `mapstructure:"DB_PORT"`
 	DBDatabase string `mapstructure:"DB_DATABASE"`
 
+	RedisHost string `mapstructure:"REDIS_HOST"`
+	RedisPort string `mapstructure:"REDIS_PORT"`
+
 	StorageURL        string `mapstructure:"STORAGE_URL"`
 	StorageAccessKey  string `mapstructure:"STORAGE_ACCESS_KEY"`
 	StorageSecretKey  string `mapstructure:"STORAGE_SECRET_KEY"`

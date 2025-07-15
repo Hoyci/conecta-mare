@@ -48,7 +48,7 @@ type (
 	}
 
 	RegisterUserRequest struct {
-		Name            string            `json:"name"`
+		FullName        string            `json:"full_name"`
 		Email           string            `json:"email"`
 		Role            valueobjects.Role `json:"role"`
 		Password        string            `json:"password"`

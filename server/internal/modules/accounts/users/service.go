@@ -94,7 +94,7 @@ func (s *userService) Register(ctx context.Context, input common.RegisterUserReq
 		return exceptions.MakeGenericApiError()
 	}
 
-	userProfile, err := userprofiles.New(user.ID(), input.Name)
+	userProfile, err := userprofiles.New(user.ID(), input.FullName)
 	if err != nil {
 		s.logger.ErrorContext(ctx, "error while attempting to process user profile entity", "err", err, "email", input.Email)
 		return exceptions.MakeApiErrorWithStatus(http.StatusUnprocessableEntity, err)
