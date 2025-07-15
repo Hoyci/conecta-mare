@@ -40,10 +40,10 @@ func (s *metricsService) StartAggregationWorker() {
 
 	c := cron.New(cron.WithLocation(time.FixedZone("BRT", -3*60*60)))
 
-	_, err := c.AddFunc("51 19 * * *", func() {
+	_, err := c.AddFunc("00 00 * * *", func() {
 		s.logger.Info("Running daily metrics aggregation job")
 		ctx := context.Background()
-		dateToProcess := time.Now()
+		dateToProcess := time.Now().AddDate(0, 0, -1)
 
 		if err := s.processMetricsForDate(ctx, dateToProcess); err != nil {
 			s.logger.Error("Failed to process metrics", "error", err)
