@@ -1,116 +1,190 @@
 services:
-  # --- Serviço do Banco de Dados ---
-  db:
-    image: postgres:15-alpine
-    container_name: conectamare-db
-    env_file:
-      - ./.env
+  # ====================================================================
+  # SERVIÇOS DE INFRAESTRUTURA
+  # ====================================================================
+  postgres:
+    image: postgres:latest
     environment:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_DATABASE}
-    ports:
-      - "${DB_PORT}:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - conectamare-net
+      - postgres_volume:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}"]
-      interval: 10s
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${DB_USERNAME}'"]
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 3
+      start_period: 15s
+    networks:
+      - app-net
 
-  # --- Serviço do S3 (LocalStack) ---
   localstack:
     image: localstack/localstack:latest
-    container_name: conectamare-localstack
-    env_file:
-      - ./.env
-    ports:
-      - "4566:4566"
+    container_name: localstack
+    environment:
+      - SERVICES=s3
+      - DEBUG=1
+      - DATA_DIR=/tmp/localstack/data
+      - DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=${STORAGE_ACCESS_KEY}
+      - AWS_SECRET_ACCESS_KEY=${STORAGE_SECRET_KEY}
     volumes:
-      - localstack_data:/var/lib/localstack
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
-      - conectamare-net
+      - app-net
 
-  # --- SERVIÇO DE MIGRAÇÃO ---
+  clickhouse-server:
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse-server
+    environment:
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
+      - CLICKHOUSE_DB=${CLICKHOUSE_DB}
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse_volume:/var/lib/clickhouse
+    networks:
+      - app-net
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 262144
+        hard: 262144
+
+  metrics-exporter:
+    image: prom/statsd-exporter:v0.22.4
+    networks:
+      - app-net
+
+  metabase:
+    image: metabase/metabase:latest
+    container_name: metabase
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./metabase:/metabase-data
+    environment:
+      MB_DB_FILE: /metabase/metabase.db
+
+  # ====================================================================
+  # SERVIÇOS DE APLICAÇÃO 
+  # ====================================================================
+  d-transformer:
+    image: rudderstack/rudder-transformer:latest
+    profiles: ["apps"] 
+    depends_on:
+      - metrics-exporter
+    environment:
+      - STATSD_SERVER_HOST=metrics-exporter
+      - STATSD_SERVER_PORT=8125
+    networks:
+      - app-net
+
+  rudder-backend:
+    image: rudderlabs/rudder-server:latest
+    profiles: ["apps"] 
+    depends_on:
+      postgres:
+        condition: service_healthy
+      d-transformer:
+        condition: service_started
+      metrics-exporter:
+        condition: service_started
+      clickhouse-server:
+        condition: service_started
+      localstack:
+        condition: service_started
+    entrypoint: sh -c '/wait-for postgres:5432 -- /rudder-server'
+    environment:
+      - JOBS_DB_HOST=postgres
+      - JOBS_DB_PORT=5432
+      - JOBS_DB_USER=${DB_USERNAME}
+      - JOBS_DB_PASSWORD=${DB_PASSWORD}
+      - JOBS_DB_DB_NAME=${RUDDER_DB_NAME}
+      - DEST_TRANSFORM_URL=http://d-transformer:9090
+      - CONFIG_BACKEND_URL=https://api.rudderstack.com
+      - WORKSPACE_TOKEN=${RUDDER_WORKSPACE_TOKEN}
+      - STATSD_SERVER_URL=metrics-exporter:9125
+    networks:
+      - app-net
+
   migrate:
     build:
       context: ./server
       dockerfile: Dockerfile
-      # CORREÇÃO: Usa o estágio 'build' do Dockerfile, que contém o Go.
       target: build
+    profiles: ["apps"] 
     container_name: conectamare-migrate
     env_file:
       - ./.env
     command: ["go", "run", "internal/database/migrate/migrate.go", "up"]
     networks:
-      - conectamare-net
+      - app-net
     depends_on:
-      db:
+      postgres:
         condition: service_healthy
 
-  # --- Serviço da API em Go (Backend) ---
   server:
     build:
       context: ./server
       dockerfile: Dockerfile
+    profiles: ["apps"] 
     container_name: conectamare-server
     env_file:
       - ./.env
     volumes:
       - ./.env:/app/.env:ro
+    expose:
+      - "8000"
     networks:
-      - conectamare-net
+      - app-net
     depends_on:
       migrate:
         condition: service_completed_successfully
       localstack:
         condition: service_started
 
-  # --- Serviço do Frontend (React SSR com Node.js) ---
   client:
     build:
       context: ./client
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL}
+        VITE_API_URL: /api/v1
+    profiles: ["apps"] 
     container_name: conectamare-client
-    env_file:
-      - ./.env
     volumes:
       - react-build:/app/dist/client
     networks:
-      - conectamare-net
+      - app-net
     depends_on:
       - server
 
-  # --- Serviço NGINX (Proxy Reverso e Servidor de Assets) ---
   nginx:
     build:
       context: .
       dockerfile: nginx/Dockerfile
+    profiles: ["apps"] 
     container_name: conectamare-nginx
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - react-build:/usr/share/nginx/html/client
     networks:
-      - conectamare-net
+      - app-net
     depends_on:
       - server
       - client
+      - rudder-backend
 
-# Define a rede interna e privada
-networks:
-  conectamare-net:
-    driver: bridge
-
-# Define os volumes para persistência e para o build do React
 volumes:
-  postgres_data:
-  localstack_data:
+  postgres_volume:
+  clickhouse_volume:
   react-build:
 
+networks:
+  app-net:
+    driver: bridge

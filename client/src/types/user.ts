@@ -5,7 +5,7 @@ import { SubcategorySchema } from "./categories";
 // CONSTANTES E TIPOS BASE
 // =================================================================
 
-const FileListClass = typeof FileList !== "undefined" ? FileList : class { };
+const FileListClass = typeof FileList !== "undefined" ? FileList : class {};
 const ROLES = ["client", "professional"] as const;
 const DATE_SCHEMA = z.date().nullable();
 
@@ -146,7 +146,7 @@ export const AuthSchema = z.object({
 });
 
 export const SignupSchema = AuthSchema.extend({
-  name: z
+  fullName: z
     .string({
       required_error: "O nome é obrigatório.",
     })
@@ -161,7 +161,7 @@ export const SignupSchema = AuthSchema.extend({
   }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "As senhas não coincidem",
-  path: ["confirmPassword"], // O erro será aplicado a este campo
+  path: ["confirmPassword"],
 });
 
 export const LoginSchema = AuthSchema.extend({
@@ -252,10 +252,10 @@ export const GetUserResponseSchema = BaseUserSchema.pick({
 });
 
 export const ProfessionalUserResponseSchema = BaseUserSchema.pick({
-  id: true,
   email: true,
   role: true,
 }).extend({
+  userId: z.string(),
   fullName: z.string(),
   profileImage: z.string().url(),
   jobDescription: z.string(),
@@ -289,4 +289,6 @@ export type OnboardingRequestValues = z.infer<typeof OnboardingRequestSchema>;
 
 // --- Tipo de resposta de request ---
 export type GetUserResponse = z.infer<typeof GetUserResponseSchema>;
-export type ProfessionalUserResponse = z.infer<typeof ProfessionalUserResponseSchema>;
+export type ProfessionalUserResponse = z.infer<
+  typeof ProfessionalUserResponseSchema
+>;

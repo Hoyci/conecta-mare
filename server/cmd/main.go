@@ -15,8 +15,6 @@ import (
 	"conecta-mare-server/internal/modules/accounts/subcategories"
 	"conecta-mare-server/internal/modules/accounts/userprofiles"
 	"conecta-mare-server/internal/modules/accounts/users"
-	"conecta-mare-server/internal/modules/metrics"
-	"conecta-mare-server/internal/redis"
 	"conecta-mare-server/internal/server"
 	"conecta-mare-server/pkg/jwt"
 	"conecta-mare-server/pkg/storage"
@@ -83,9 +81,9 @@ func main() {
 	db := database.New(cfg.DBUsername, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBDatabase)
 	defer db.Close()
 
-	logger.Info("Starting Redis connection")
-	rdbClient := redis.NewClient(cfg.RedisHost, cfg.RedisPort)
-	defer rdbClient.Close()
+	// logger.Info("Starting Redis connection")
+	// rdbClient := redis.NewClient(cfg.RedisHost, cfg.RedisPort)
+	// defer rdbClient.Close()
 
 	logger.Info("Starting storage connection")
 	storageClient := storage.NewStorageClient(
@@ -113,7 +111,7 @@ func main() {
 	servicesRepo := services.NewRepository(db.DB())
 	serviceImagesRepo := serviceimages.NewRepository(db.DB())
 	locationsRepo := locations.NewRepository(db.DB())
-	metricsRepo := metrics.NewRepository(db.DB())
+	// metricsRepo := metrics.NewRepository(db.DB())
 
 	sessionsService := session.NewService(sessionsRepo, logger)
 	subcategoriesService := subcategories.NewService(subcategoriesRepo, logger)
@@ -142,7 +140,7 @@ func main() {
 		logger,
 	)
 
-	metricsService := metrics.NewService(metricsRepo, rdbClient, logger)
+	// metricsService := metrics.NewService(metricsRepo, rdbClient, logger)
 
 	categoriesHandler := categories.NewHandler(categoriesService)
 	categoriesHandler.RegisterRoutes(router)
@@ -153,16 +151,16 @@ func main() {
 	onboardingsHandler := onboardings.NewHandler(onboardingsService, cfg.JWTAccessKey)
 	onboardingsHandler.RegisterRoutes(router)
 
-	metricsHandler := metrics.NewHandler(
-		cfg.JWTAccessKey,
-		metricsService,
-		logger,
-	)
-	metricsHandler.RegisterRoutes(router)
+	// metricsHandler := metrics.NewHandler(
+	// 	cfg.JWTAccessKey,
+	// 	metricsService,
+	// 	logger,
+	// )
+	// metricsHandler.RegisterRoutes(router)
 
 	done := make(chan bool, 1)
 
-	go metricsService.StartAggregationWorker()
+	// go metricsService.StartAggregationWorker()
 	go gracefulShutdown(server, done, logger)
 
 	err := server.ListenAndServe()

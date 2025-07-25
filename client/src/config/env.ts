@@ -3,7 +3,8 @@ import { z } from "zod";
 const envSchema = z.object({
   VITE_PORT: z.coerce.number().default(3000),
   VITE_API_URL: z.string().url().default("http://localhost:8080"),
-
+  VITE_DATA_PLANE_URL: z.string().url(),
+  VITE_RUDDER_WRITE_KEY: z.string(),
   VITE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
