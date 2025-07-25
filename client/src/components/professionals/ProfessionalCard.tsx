@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { MapPin, Star } from "lucide-react";
 import ProfessionalModal from "./ProfessionalModal";
-import { ProfessionalUser } from "@/types/user";
+import { ProfessionalUserResponse } from "@/types/user";
 
 interface ProfessionalCardProps {
-  professional: ProfessionalUser;
+  professional: ProfessionalUserResponse;
 }
 
 const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {

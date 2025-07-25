@@ -95,6 +95,9 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: ^1.1.4
         version: 1.2.7(@types/react-dom@18.3.7(@types/react@18.3.23))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@rudderstack/analytics-js':
+        specifier: ^3.22.0
+        version: 3.22.0
       '@tanstack/react-query':
         specifier: ^5.56.2
         version: 5.81.5(react@18.3.1)
@@ -1401,6 +1404,9 @@ packages:
     resolution: {integrity: sha512-3+QZROYfJ25PDcxFF66UEk8jGWigHJeecZILvkPkyQN7oc5BvFo4YEXFkOs154j3FTMp9mn9Ky8RCOwastduEA==}
     cpu: [x64]
     os: [win32]
+
+  '@rudderstack/analytics-js@3.22.0':
+    resolution: {integrity: sha512-pMK8MqhVmZzxZC+9nnVu3pLoUv7bxzr5XAoE46/284koHFgLF5jD7RNrubd3abLP4Wxcv9RYJ9x06GP8f2NVYg==}
 
   '@swc/core-darwin-arm64@1.12.9':
     resolution: {integrity: sha512-GACFEp4nD6V+TZNR2JwbMZRHB+Yyvp14FrcmB6UCUYmhuNWjkxi+CLnEvdbuiKyQYv0zA+TRpCHZ+whEs6gwfA==}
@@ -4002,6 +4008,8 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.44.2':
     optional: true
+
+  '@rudderstack/analytics-js@3.22.0': {}
 
   '@swc/core-darwin-arm64@1.12.9':
     optional: true

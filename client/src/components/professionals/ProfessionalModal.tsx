@@ -20,8 +20,9 @@ import { ProfessionalUserResponse, Project } from "@/types/user";
 import { useQuery } from "@tanstack/react-query";
 import { getProfessionalByID } from "@/services/user-service";
 import { format } from "date-fns";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatCentsToBRL } from "@/lib/utils";
+import { getAnalytics } from "@/lib/analytics";
 
 interface ProfessionalModalProps {
   userID: string;
@@ -35,17 +36,31 @@ const ProfessionalModal = ({
   onClose,
 }: ProfessionalModalProps) => {
   const { toast } = useToast();
-  const [selectedService, setSelectedService] = useState<Project | null>(
-    null,
-  );
+  const [selectedService, setSelectedService] = useState<Project | null>(null);
   const [isImageModalOpen, setImageModalOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  const { data: professional, isLoading } = useQuery<ProfessionalUserResponse>({
+  const {
+    data: professional,
+    isLoading,
+    isSuccess,
+  } = useQuery<ProfessionalUserResponse>({
     queryKey: ["professionalUser", userID],
     queryFn: () => getProfessionalByID(userID),
     enabled: isOpen && !!userID,
   });
+
+  useEffect(() => {
+    if (professional) {
+      const analytics = getAnalytics();
+      analytics.track("profile_visited", {
+        user_id: userID,
+        professional_id: userID,
+        full_name: professional.fullName,
+        subcategory: professional.subcategoryName,
+      });
+    }
+  }, [isSuccess, professional]);
 
   const handleContact = () => {
     toast({
@@ -75,7 +90,6 @@ const ProfessionalModal = ({
     setImageModalOpen(true);
   };
 
-
   if (isLoading || !professional) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -94,9 +108,9 @@ const ProfessionalModal = ({
             <Loader2 className="w-6 h-6 mr-2 animate-spin text-conecta-blue" />
             <span className="text-gray-600">Carregando informações...</span>
           </div>
-        </ DialogContent>
+        </DialogContent>
       </Dialog>
-    )
+    );
   }
 
   return (
@@ -146,9 +160,7 @@ const ProfessionalModal = ({
 
                   <div className="flex items-center text-gray-600 text-sm mt-2">
                     <MapPin size={16} className="mr-1" />
-                    <span className="capitalize">
-                      {professional.location}
-                    </span>
+                    <span className="capitalize">{professional.location}</span>
                   </div>
                 </div>
 
@@ -195,12 +207,7 @@ const ProfessionalModal = ({
 
                       <div className="flex flex-col gap-4">
                         {professional.certifications.map(
-                          ({
-                            courseName,
-                            institution,
-                            startDate,
-                            endDate,
-                          }) => (
+                          ({ courseName, institution, startDate, endDate }) => (
                             <div
                               key={`${courseName}-${institution}-${startDate}`}
                               className="py-2 px-4 border border-gray-200 rounded-md shadow-sm bg-white"
@@ -234,22 +241,24 @@ const ProfessionalModal = ({
                     </h3>
                   </div>
                   <div className="flex flex-col gap-4">
-                    {professional.services.map(({ name, description, price }) => (
-                      <div
-                        key={name}
-                        className="py-2 px-4 border border-gray-200 rounded-md shadow-sm bg-white"
-                      >
-                        <h4 className="font-semibold text-gray-900 mb-1">
-                          {name}
-                        </h4>
-                        <p className="text-gray-700 mb-1">{description}</p>
-                        <p className="text-gray-700 mb-1">
-                          {price === 0
-                            ? "Gratuito"
-                            : `${formatCentsToBRL(price)}`}
-                        </p>
-                      </div>
-                    ))}
+                    {professional.services.map(
+                      ({ name, description, price }) => (
+                        <div
+                          key={name}
+                          className="py-2 px-4 border border-gray-200 rounded-md shadow-sm bg-white"
+                        >
+                          <h4 className="font-semibold text-gray-900 mb-1">
+                            {name}
+                          </h4>
+                          <p className="text-gray-700 mb-1">{description}</p>
+                          <p className="text-gray-700 mb-1">
+                            {price === 0
+                              ? "Gratuito"
+                              : `${formatCentsToBRL(price)}`}
+                          </p>
+                        </div>
+                      ),
+                    )}
                   </div>
                 </TabsContent>
                 <TabsContent value="portfolio">

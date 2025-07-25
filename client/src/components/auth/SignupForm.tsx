@@ -69,14 +69,16 @@ const SignupForm = () => {
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
               />
               <Input
-                {...register("name")}
+                {...register("fullName")}
                 id="name"
                 placeholder="Seu nome"
                 className="pl-10"
               />
             </div>
-            {errors.name && (
-              <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>
+            {errors.fullName && (
+              <p className="text-red-500 text-xs mt-1">
+                {errors.fullName.message}
+              </p>
             )}
           </div>
 

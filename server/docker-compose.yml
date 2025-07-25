@@ -21,7 +21,7 @@ services:
     image: localstack/localstack:latest
     container_name: localstack
     ports:
-      - "4566:4566" 
+      - "4566:4566"
       - "4571:4571"
     environment:
       - SERVICES=s3
@@ -35,9 +35,91 @@ services:
     networks:
       - application-net
 
+  metabase:
+    image: metabase/metabase:latest
+    container_name: metabase
+    ports:
+      - "3002:3000"
+    volumes:
+      - ./metabase-data:/metabase-data
+    environment:
+      MB_DB_FILE: /metabase-data/metabase.db
+    networks: 
+      - application-net
+
+  clickhouse-server:
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse-server
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
+      - CLICKHOUSE_DB=${CLICKHOUSE_DB}
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
+    volumes:
+      - clickhouse_volume:/var/lib/clickhouse
+    networks:
+      - application-net
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 262144
+        hard: 262144
+
+  metrics-exporter:
+    image: prom/statsd-exporter:v0.22.4
+    ports:
+      - "9102:9102"
+      - "8125:8125/udp" 
+    networks:
+      - application-net
+
+  d-transformer:
+    image: rudderstack/rudder-transformer:latest
+    depends_on:
+      - metrics-exporter
+    ports:
+      - "9090:9090"
+    environment:
+      - STATSD_SERVER_HOST=metrics-exporter
+      - STATSD_SERVER_PORT=8125 
+    networks:
+      - application-net
+
+  rudder-backend:
+    image: rudderlabs/rudder-server:latest
+    depends_on:
+      postgres:
+        condition: service_healthy
+      d-transformer:
+        condition: service_started
+      metrics-exporter:
+        condition: service_started
+      clickhouse-server:
+        condition: service_started
+      localstack:
+        condition: service_started
+    entrypoint: sh -c '/wait-for postgres:5432 -- /rudder-server'
+    ports:
+      - "8080:8080"
+    environment:
+      - JOBS_DB_HOST=postgres
+      - JOBS_DB_PORT=5432
+      - JOBS_DB_USER=${DB_USERNAME}
+      - JOBS_DB_PASSWORD=${DB_PASSWORD}
+      - JOBS_DB_DB_NAME=${RUDDER_DB_NAME}
+      - DEST_TRANSFORM_URL=http://d-transformer:9090
+      - CONFIG_BACKEND_URL=https://api.rudderstack.com
+      - WORKSPACE_TOKEN=${RUDDER_WORKSPACE_TOKEN}
+      - STATSD_SERVER_URL=metrics-exporter:9125
+    networks:
+      - application-net
+
 volumes:
   postgres_volume:
+  clickhouse_volume:
 
 networks:
   application-net:
-
