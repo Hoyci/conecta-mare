@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { snakeCase, camelCase } from "lodash-es";
+import { ROLES, Roles } from "@/types/user";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -65,4 +66,8 @@ export function formatCentsToBRL(cents: number): string {
 
 export function parseBRLToCents(value: number): number {
   return Math.round(value * 100);
+}
+
+export function isRole(value: string | null) {
+  return ROLES.includes(value as Roles);
 }

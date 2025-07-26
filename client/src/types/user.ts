@@ -6,7 +6,7 @@ import { SubcategorySchema } from "./categories";
 // =================================================================
 
 const FileListClass = typeof FileList !== "undefined" ? FileList : class {};
-const ROLES = ["client", "professional"] as const;
+export const ROLES = ["client", "professional"] as const;
 const DATE_SCHEMA = z.date().nullable();
 
 export const MAX_CERTIFICATIONS = 5;
@@ -279,6 +279,7 @@ export type Certification = z.infer<typeof CertificationSchema>;
 export type Service = z.infer<typeof ServiceSchema>;
 export type ServiceImage = z.infer<typeof ServiceImageSchema>;
 export type ProfessionalProfile = z.infer<typeof ProfessionalProfileSchema>;
+export type Roles = (typeof ROLES)[number];
 
 // --- Tipos para autenticação ---
 export type SignUpValues = z.infer<typeof SignupSchema>;

@@ -27,7 +27,6 @@ const SignupForm = () => {
   const [password] = watch(["password"]);
 
   const onSubmit = (data: SignUpValues) => {
-    console.log(data);
     mutate(data);
   };
 
