@@ -21,7 +21,7 @@ const HeroSection = () => {
                   Buscar Profissionais
                 </Button>
               </Link>
-              <Link to="/signup">
+              <Link to="/signup?role=professional">
                 <Button
                   variant="outline"
                   className="border-white text-conecta-blue hover:bg-white px-8 py-6 text-lg"

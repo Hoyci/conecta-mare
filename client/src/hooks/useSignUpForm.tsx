@@ -1,18 +1,26 @@
 import { useToast } from "@/components/ui/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { signUpUser } from "@/services/auth-service";
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { SignupSchema, SignUpValues } from "@/types/user";
+import { Roles, SignupSchema, SignUpValues } from "@/types/user";
+import { isRole } from "@/lib/utils";
 
 export function useSignUpForm() {
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const defaultRole = searchParams.get("role");
+
   const methods = useForm<SignUpValues>({
     resolver: zodResolver(SignupSchema),
     mode: "onChange",
+    defaultValues: {
+      role: isRole(defaultRole) ? (defaultRole as Roles) : ("client" as Roles),
+    },
   });
 
   const {
