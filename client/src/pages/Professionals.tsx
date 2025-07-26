@@ -105,8 +105,6 @@ const Professionals = () => {
       queryFn: getProfessionals,
     });
 
-  console.log("professionals", professionals);
-
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
