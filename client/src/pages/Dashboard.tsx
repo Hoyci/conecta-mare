@@ -23,17 +23,11 @@ import {
 } from "recharts";
 import { AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar, Edit, StarIcon } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
 import { startCase, camelCase } from "lodash-es";
 import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
 import { getSignedUser } from "@/services/user-service";
 import { useQuery } from "@tanstack/react-query";
-
-const mockProfile = {
-  name: "Juliana Silva",
-  profession: "Designer Gráfico",
-  description: "Especializada em identidade visual e branding.",
-};
+import { useNavigate } from "react-router-dom";
 
 const profileViews = [
   { date: "Seg", value: 20 },
@@ -56,21 +50,23 @@ const benchmarks = [
 ];
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [tab, setTab] = useState("overview");
 
-
   const { data: userData = {} } = useQuery({
-    queryKey: ['userData'],
-    queryFn: getSignedUser
-  })
+    queryKey: ["userData"],
+    queryFn: getSignedUser,
+  });
 
   if (!userData.id) {
     return <DashboardSkeleton />;
   }
 
+  if (userData.role === "professional" && !userData.subcategoryName) {
+    navigate("/onboarding");
+  }
 
   return (
-
     <div className="min-h-screen flex flex-col bg-conecta-gray">
       <Navbar />
       <main className="flex-grow py-6">
@@ -81,13 +77,13 @@ const Dashboard = () => {
                 <div className="w-full flex flex-col gap-4">
                   <div className="flex flex-row">
                     <Avatar className="w-24 h-24 border-2 rounded-full shadow-lg">
-                      {userData.profileImage ?
-                        <AvatarImage src={userData.profileImage} />
-                        :
+                      {userData.profileImage ? (
+                        <AvatarImage src={userData.profileImage as string} />
+                      ) : (
                         <AvatarFallback className="bg-conecta-blue text-white text-2xl font-bold">
                           {userData.fullName.charAt(0)}
                         </AvatarFallback>
-                      }
+                      )}
                     </Avatar>
 
                     <div className="mt-4 md:ml-6 md:mt-0 pb-4">
@@ -421,8 +417,7 @@ const Dashboard = () => {
               </Card>
             </TabsContent>
 
-            {/* Comparativo  */
-            }
+            {/* Comparativo  */}
             <TabsContent value="comparativo" className="space-y-6">
               <Card className="border-none shadow-md">
                 <CardContent className="p-6">
