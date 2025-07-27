@@ -12,7 +12,7 @@ type Location struct {
 	street        string
 	number        string
 	complement    string
-	neighborhood  string
+	communityID   string
 	createdAt     time.Time
 	updatedAt     *time.Time
 	deletedAt     *time.Time
@@ -23,7 +23,7 @@ func New(
 	street,
 	number,
 	complement,
-	neighborhood string,
+	communityID string,
 ) (*Location, error) {
 	service := Location{
 		id:            uid.New("location"),
@@ -31,7 +31,7 @@ func New(
 		street:        street,
 		number:        number,
 		complement:    complement,
-		neighborhood:  neighborhood,
+		communityID:   communityID,
 		createdAt:     time.Now(),
 		updatedAt:     nil,
 		deletedAt:     nil,
@@ -47,7 +47,7 @@ func NewFromModel(m models.Location) *Location {
 		street:        m.Street,
 		number:        m.Number,
 		complement:    m.Complement,
-		neighborhood:  m.Neighborhood,
+		communityID:   m.CommunityID,
 		createdAt:     m.CreatedAt,
 		updatedAt:     m.UpdatedAt,
 		deletedAt:     m.DeletedAt,
@@ -61,7 +61,7 @@ func (s *Location) ToModel() models.Location {
 		Street:        s.street,
 		Number:        s.number,
 		Complement:    s.complement,
-		Neighborhood:  s.neighborhood,
+		CommunityID:   s.communityID,
 		CreatedAt:     s.createdAt,
 		UpdatedAt:     s.updatedAt,
 		DeletedAt:     s.deletedAt,
@@ -73,4 +73,4 @@ func (s *Location) UserProfileID() string { return s.userProfileID }
 func (s *Location) Street() string        { return s.street }
 func (s *Location) Number() string        { return s.number }
 func (s *Location) Complement() string    { return s.complement }
-func (s *Location) Neighborhood() string  { return s.neighborhood }
+func (s *Location) CommunityID() string   { return s.communityID }

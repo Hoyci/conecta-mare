@@ -69,7 +69,7 @@ type Location struct {
 	Street        string     `db:"street"`
 	Number        string     `db:"number"`
 	Complement    string     `db:"complement"`
-	Neighborhood  string     `db:"neighborhood"`
+	CommunityID   string     `db:"community_id"`
 	CreatedAt     time.Time  `db:"created_at"`
 	UpdatedAt     *time.Time `db:"updated_at"`
 	DeletedAt     *time.Time `db:"deleted_at"`

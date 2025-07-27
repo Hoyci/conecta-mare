@@ -5,7 +5,7 @@ import { SubcategorySchema } from "./categories";
 // CONSTANTES E TIPOS BASE
 // =================================================================
 
-const FileListClass = typeof FileList !== "undefined" ? FileList : class {};
+const FileListClass = typeof FileList !== "undefined" ? FileList : class { };
 export const ROLES = ["client", "professional"] as const;
 const DATE_SCHEMA = z.date().nullable();
 
@@ -41,7 +41,7 @@ export const LocationSchema = z.object({
   street: z.string(),
   number: z.string(),
   complement: z.string().optional(),
-  neighborhood: z.string(),
+  communityId: z.string(),
 });
 
 const FormImageSchema = z.object({
@@ -209,7 +209,7 @@ export const OnboardingRequestSchema = z
         return (
           data.location?.street &&
           data.location?.number &&
-          data.location?.neighborhood
+          data.location?.communityId
         );
       }
       return true;

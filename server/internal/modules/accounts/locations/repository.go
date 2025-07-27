@@ -1,6 +1,8 @@
 package locations
 
 import (
+	"fmt"
+
 	"github.com/jmoiron/sqlx"
 )
 
@@ -14,11 +16,12 @@ func NewRepository(db *sqlx.DB) LocationsRepository {
 
 func (r *repository) CreateTx(tx *sqlx.Tx, location *Location) error {
 	model := location.ToModel()
+	fmt.Println(model.CommunityID)
 	query := `
 		INSERT INTO locations (
-				id, user_profile_id, street, number, complement, neighborhood, created_at
+				id, user_profile_id, street, number, complement, community_id, created_at
 			) VALUES (
-				:id, :user_profile_id, :street, :number, :complement, :neighborhood, :created_at
+				:id, :user_profile_id, :street, :number, :complement, :community_id, :created_at
 		)`
 
 	_, err := tx.NamedExec(query, model)

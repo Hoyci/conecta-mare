@@ -35,7 +35,7 @@ type (
 		Street        string     `json:"street" db:"street"`
 		Number        string     `json:"number" db:"number"`
 		Complement    string     `json:"complement" db:"complement"`
-		Neighborhood  string     `json:"neighborhood" db:"neighborhood"`
+		CommunityID   string     `json:"community_id" db:"community_id"`
 		CreatedAt     time.Time  `json:"created_at" db:"created_at"`
 		UpdatedAt     *time.Time `json:"updated_at,omitempty" db:"updated_at"`
 		DeletedAt     *time.Time `json:"deleted_at,omitempty" db:"deleted_at"`
