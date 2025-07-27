@@ -1,8 +1,15 @@
-import { useFormContext, useFieldArray } from "react-hook-form";
+import { useFormContext, useFieldArray, Controller } from "react-hook-form";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 import { Plus, Upload, X } from "lucide-react";
 import { Card } from "../ui/card";
 import { useCallback } from "react";
@@ -12,6 +19,8 @@ import {
   ProfessionalProfile,
   ServiceImage,
 } from "@/types/user";
+import { getCommunities } from "@/services/communities.service";
+import { useQuery } from "@tanstack/react-query";
 
 interface ServiceImageUploadProps {
   index: number;
@@ -30,6 +39,15 @@ interface ServiceImageItemProps {
 const ServicesStep = () => {
   const { register, watch, control } = useFormContext<ProfessionalProfile>();
   const hasOwnLocation = watch("hasOwnLocation");
+
+  const {
+    data: { communities } = {},
+    isLoading: isLoadingCommunities,
+    isError,
+  } = useQuery({
+    queryKey: ["communities"],
+    queryFn: getCommunities,
+  });
 
   const {
     fields: services,
@@ -82,9 +100,38 @@ const ServicesStep = () => {
           </div>
           <div>
             <Label>Bairro</Label>
-            <Input
-              {...register("location.neighborhood")}
-              placeholder="Vila do Pinheiro"
+            <Controller
+              name="location.communityId"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                  defaultValue={field.value}
+                  disabled={isLoadingCommunities || isError}                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        isLoadingCommunities
+                          ? "Carregando bairros..."
+                          : "Selecione um bairro"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {isError && (
+                      <SelectItem value="" disabled>
+                        Erro ao carregar bairros
+                      </SelectItem>
+                    )}
+                    {communities?.map((community) => (
+                      <SelectItem key={community.id} value={community.id}>
+                        {community.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             />
           </div>
         </div>

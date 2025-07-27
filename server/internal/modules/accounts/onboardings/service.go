@@ -402,12 +402,13 @@ func (s *onboardingsService) createLocationTx(
 	userProfileID string,
 	loc *common.OnboardingLocation,
 ) error {
+	fmt.Println(loc)
 	location, err := locations.New(
 		userProfileID,
 		loc.Street,
 		loc.Number,
 		loc.Complement,
-		loc.Neighborhood,
+		loc.CommunityID,
 	)
 	if err != nil {
 		s.logger.ErrorContext(ctx, "error creating location entity", "err", err)
@@ -415,6 +416,7 @@ func (s *onboardingsService) createLocationTx(
 	}
 
 	if err := s.locationRepository.CreateTx(tx, location); err != nil {
+		fmt.Println(err)
 		s.logger.ErrorContext(ctx, "failed to insert location", "user_profile_id", userProfileID)
 		return exceptions.MakeGenericApiError()
 	}
