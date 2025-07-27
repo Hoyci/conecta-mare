@@ -14,7 +14,7 @@ type sessionsRepository struct {
 	db *sqlx.DB
 }
 
-func NewRepo(db *sqlx.DB) SessionsRepository {
+func NewRepository(db *sqlx.DB) SessionsRepository {
 	return &sessionsRepository{db: db}
 }
 

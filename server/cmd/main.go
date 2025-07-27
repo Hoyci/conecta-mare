@@ -5,6 +5,7 @@ import (
 	"conecta-mare-server/internal/database"
 	"conecta-mare-server/internal/modules/accounts/categories"
 	"conecta-mare-server/internal/modules/accounts/certifications"
+	"conecta-mare-server/internal/modules/accounts/communities"
 	"conecta-mare-server/internal/modules/accounts/locations"
 	"conecta-mare-server/internal/modules/accounts/onboardings"
 	"conecta-mare-server/internal/modules/accounts/projectimages"
@@ -81,10 +82,6 @@ func main() {
 	db := database.New(cfg.DBUsername, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBDatabase)
 	defer db.Close()
 
-	// logger.Info("Starting Redis connection")
-	// rdbClient := redis.NewClient(cfg.RedisHost, cfg.RedisPort)
-	// defer rdbClient.Close()
-
 	logger.Info("Starting storage connection")
 	storageClient := storage.NewStorageClient(
 		cfg.StorageURL,
@@ -100,10 +97,10 @@ func main() {
 
 	tokenProvider := jwt.NewProvider(cfg.JWTAccessKey, cfg.JWTRefreshKey)
 
-	subcategoriesRepo := subcategories.NewRepo(db.DB())
-	categoriesRepo := categories.NewRepo(db.DB())
-	sessionsRepo := session.NewRepo(db.DB())
-	usersRepo := users.NewRepo(db.DB())
+	subcategoriesRepo := subcategories.NewRepository(db.DB())
+	categoriesRepo := categories.NewRepository(db.DB())
+	sessionsRepo := session.NewRepository(db.DB())
+	usersRepo := users.NewRepository(db.DB())
 	userProfilesRepo := userprofiles.NewRepository(db.DB())
 	certificationsRepo := certifications.NewRepository(db.DB())
 	projectsRepo := projects.NewRepository(db.DB())
@@ -111,7 +108,7 @@ func main() {
 	servicesRepo := services.NewRepository(db.DB())
 	serviceImagesRepo := serviceimages.NewRepository(db.DB())
 	locationsRepo := locations.NewRepository(db.DB())
-	// metricsRepo := metrics.NewRepository(db.DB())
+	communitiesRepo := communities.NewRepository(db.DB())
 
 	sessionsService := session.NewService(sessionsRepo, logger)
 	subcategoriesService := subcategories.NewService(subcategoriesRepo, logger)
@@ -139,8 +136,7 @@ func main() {
 		storageClient,
 		logger,
 	)
-
-	// metricsService := metrics.NewService(metricsRepo, rdbClient, logger)
+	communitiesService := communities.NewService(communitiesRepo, logger)
 
 	categoriesHandler := categories.NewHandler(categoriesService)
 	categoriesHandler.RegisterRoutes(router)
@@ -151,16 +147,11 @@ func main() {
 	onboardingsHandler := onboardings.NewHandler(onboardingsService, cfg.JWTAccessKey)
 	onboardingsHandler.RegisterRoutes(router)
 
-	// metricsHandler := metrics.NewHandler(
-	// 	cfg.JWTAccessKey,
-	// 	metricsService,
-	// 	logger,
-	// )
-	// metricsHandler.RegisterRoutes(router)
+	communitiesHandler := communities.NewHandler(communitiesService)
+	communitiesHandler.RegisterRoutes(router)
 
 	done := make(chan bool, 1)
 
-	// go metricsService.StartAggregationWorker()
 	go gracefulShutdown(server, done, logger)
 
 	err := server.ListenAndServe()
