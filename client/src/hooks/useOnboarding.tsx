@@ -9,6 +9,7 @@ import {
   submitOnboardingProfile,
 } from "@/services/user-service";
 import { OnboardingRequestSchema, OnboardingRequestValues } from "@/types/user";
+import { getAnalytics } from "@/lib/analytics";
 
 export const useOnboarding = () => {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ export const useOnboarding = () => {
         street: "",
         number: "",
         complement: "",
-        neighborhood: "",
+        communityId: "",
       },
     },
   });
@@ -46,12 +47,17 @@ export const useOnboarding = () => {
 
   const { mutate, isPending } = useMutation({
     mutationFn: submitOnboardingProfile,
-    onSuccess: () => {
+    onSuccess: (_, { location, subcategoryID }) => {
+      const analytics = getAnalytics();
       toast({
         title: "Perfil configurado com sucesso! ✅",
         description: "Você será redirecionado para o seu dashboard.",
       });
       navigate("/dashboard");
+      analytics.track("onboarding_completed", {
+        community_id: location.communityId,
+        subcategory_id: subcategoryID,
+      });
     },
     onError: (error) => {
       toast({

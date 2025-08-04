@@ -3,38 +3,8 @@ package common
 import (
 	"conecta-mare-server/pkg/valueobjects"
 	"encoding/json"
-	"fmt"
 	"time"
 )
-
-type JSONMap map[string]string
-
-func (j *JSONMap) Scan(src any) error {
-	bytes, ok := src.([]byte)
-	if !ok {
-		return fmt.Errorf("expected []byte for JSONMap, got %T", src)
-	}
-	return json.Unmarshal(bytes, j)
-}
-
-type JSONB []byte
-
-func (j *JSONB) Scan(value interface{}) error {
-	if value == nil {
-		*j = nil
-		return nil
-	}
-	b, ok := value.([]byte)
-	if !ok {
-		return fmt.Errorf("failed to scan JSONB: %v", value)
-	}
-	*j = b
-	return nil
-}
-
-func (j JSONB) Unmarshal(v interface{}) error {
-	return json.Unmarshal(j, v)
-}
 
 type (
 	User struct {
@@ -75,36 +45,37 @@ type (
 	}
 
 	GetProfessionalByIDRaw struct {
-		UserID             string  `db:"user_id"`
-		Email              string  `db:"email"`
-		FullName           string  `db:"full_name"`
-		ProfileImage       string  `db:"profile_image"`
-		JobDescription     string  `db:"job_description"`
-		Phone              string  `db:"phone"`
-		SocialLinks        JSONMap `db:"social_links"`
-		CategoryName       string  `db:"category_name"`
-		SubcategoryName    string  `db:"subcategory_name"`
-		ProjectsJSON       JSONB   `db:"projects"`
-		CertificationsJSON JSONB   `db:"certifications"`
-		Rating             int     `db:"rating"`
-		Location           string  `db:"location"`
-		ServicesJSON       JSONB   `db:"services"`
+		UserID             string          `db:"user_id"`
+		Email              string          `db:"email"`
+		FullName           string          `db:"full_name"`
+		ProfileImage       string          `db:"profile_image"`
+		JobDescription     string          `db:"job_description"`
+		Phone              string          `db:"phone"`
+		SocialLinks        json.RawMessage `db:"social_links"`
+		Category           json.RawMessage `db:"category"`
+		Subcategory        json.RawMessage `db:"subcategory"`
+		ProjectsJSON       json.RawMessage `db:"projects"`
+		CertificationsJSON json.RawMessage `db:"certifications"`
+		Rating             int             `db:"rating"`
+		Location           json.RawMessage `db:"location"`
+		ServicesJSON       json.RawMessage `db:"services"`
 	}
 
 	GetProfessionalByIDResponse struct {
-		UserID          string          `json:"user_id" db:"user_id"`
-		Email           string          `json:"email" db:"email"`
-		FullName        string          `json:"full_name" db:"full_name"`
-		ProfileImage    string          `json:"profile_image" db:"profile_image"`
-		JobDescription  string          `json:"job_description" db:"job_description"`
-		Phone           string          `json:"phone" db:"phone"`
-		SocialLinks     JSONMap         `json:"social_links" db:"social_links"`
-		SubcategoryName string          `json:"subcategory_name" db:"subcategory_name"`
-		Rating          int             `json:"rating" db:"location"`
-		Location        string          `json:"location" db:"location"`
-		Projects        []Project       `json:"projects" db:"projects"`
-		Certifications  []Certification `json:"certifications" db:"certifications"`
-		Services        []Service       `json:"services" db:"services"`
+		UserID         string          `json:"user_id" db:"user_id"`
+		Email          string          `json:"email" db:"email"`
+		FullName       string          `json:"full_name" db:"full_name"`
+		ProfileImage   string          `json:"profile_image" db:"profile_image"`
+		JobDescription string          `json:"job_description" db:"job_description"`
+		Phone          string          `json:"phone" db:"phone"`
+		SocialLinks    json.RawMessage `json:"social_links" db:"social_links"`
+		Category       json.RawMessage `json:"category" db:"category"`
+		Subcategory    json.RawMessage `json:"subcategory" db:"subcategory"`
+		Rating         int             `json:"rating" db:"location"`
+		Location       json.RawMessage `json:"location" db:"location"`
+		Projects       []Project       `json:"projects" db:"projects"`
+		Certifications []Certification `json:"certifications" db:"certifications"`
+		Services       []Service       `json:"services" db:"services"`
 	}
 
 	Project struct {
@@ -142,9 +113,9 @@ type (
 	}
 
 	Location struct {
-		Street       string `json:"street" db:"street"`
-		Number       string `json:"number" db:"number"`
-		Complement   string `json:"complement" db:"complement"`
-		Neighborhood string `json:"neighborhood" db:"neighborhood"`
+		Street      string `json:"street" db:"street"`
+		Number      string `json:"number" db:"number"`
+		Complement  string `json:"complement" db:"complement"`
+		CommunityID string `json:"community_id" db:"community_id"`
 	}
 )

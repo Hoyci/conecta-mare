@@ -54,10 +54,10 @@ const ProfessionalModal = ({
     if (professional) {
       const analytics = getAnalytics();
       analytics.track("profile_visited", {
-        user_id: userID,
         professional_id: userID,
-        full_name: professional.fullName,
-        subcategory: professional.subcategoryName,
+        category: professional.category,
+        subcategory: professional.subcategory,
+        location: professional.location,
       });
     }
   }, [isSuccess, professional]);
@@ -142,7 +142,7 @@ const ProfessionalModal = ({
                     {professional.fullName}
                   </h3>
                   <p className="text-conecta-blue font-medium">
-                    {professional.subcategoryName}
+                    {professional.subcategory.name}
                   </p>
 
                   <div className="flex items-center mt-2">
@@ -160,7 +160,9 @@ const ProfessionalModal = ({
 
                   <div className="flex items-center text-gray-600 text-sm mt-2">
                     <MapPin size={16} className="mr-1" />
-                    <span className="capitalize">{professional.location}</span>
+                    <span className="capitalize">
+                      {professional.location.communityName}
+                    </span>
                   </div>
                 </div>
 

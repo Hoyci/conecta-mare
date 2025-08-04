@@ -12,6 +12,7 @@ import { LoginSchema, LoginValues } from "@/types/user";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
 import { useMemo } from "react";
+import { getAnalytics } from "@/lib/analytics";
 
 const LoginForm = () => {
   const { toast } = useToast();
@@ -36,13 +37,15 @@ const LoginForm = () => {
   const { mutate, isPending } = useMutation({
     mutationFn: (payload: LoginValues) =>
       loginUser(payload.email, payload.password),
-    onSuccess: (session, { rememberMe }) => {
+    onSuccess: (session, { email, rememberMe }) => {
+      const analytics = getAnalytics();
       login(session, rememberMe);
       toast({
         title: "Login realizado com sucesso",
         description: "Seja bem-vindo ao ConectaMaré",
       });
       navigate("/dashboard");
+      analytics.track("logged_in", { email });
     },
     onError: (error: Error) => {
       const errorMessages: Record<string, string> = {

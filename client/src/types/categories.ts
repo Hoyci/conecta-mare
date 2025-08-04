@@ -4,7 +4,6 @@ export const CategorySchema = z.object({
   id: z.string(),
   name: z.string(),
   icon: z.string(),
-  categoryId: z.string(),
 });
 
 export const SubcategorySchema = z.object({
