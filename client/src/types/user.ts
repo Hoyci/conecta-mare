@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { SubcategorySchema } from "./categories";
+import { CategorySchema, SubcategorySchema } from "./categories";
 
 // =================================================================
 // CONSTANTES E TIPOS BASE
 // =================================================================
 
-const FileListClass = typeof FileList !== "undefined" ? FileList : class { };
+const FileListClass = typeof FileList !== "undefined" ? FileList : class {};
 export const ROLES = ["client", "professional"] as const;
 const DATE_SCHEMA = z.date().nullable();
 
@@ -30,12 +30,10 @@ const BaseUserSchema = z.object({
   deletedAt: DATE_SCHEMA,
 });
 
-const SocialLinksSchema = z
-  .object({
-    instagram: z.string().url().optional(),
-    linkedin: z.string().optional(),
-  })
-  .optional();
+const SocialLinksSchema = z.object({
+  instagram: z.string().url().optional(),
+  linkedin: z.string().optional(),
+});
 
 export const LocationSchema = z.object({
   street: z.string(),
@@ -108,7 +106,7 @@ export const UserProfileSchema = BaseUserSchema.extend({
     .optional(),
   jobDescription: z.string().max(MAX_JOB_DESCRIPTION_CHARS),
   phone: z.string().min(14, "Telefone inválido"),
-  socialLinks: SocialLinksSchema,
+  socialLinks: SocialLinksSchema.optional(),
 });
 
 export const ProfessionalProfileSchema = UserProfileSchema.extend({
@@ -171,7 +169,6 @@ export const LoginSchema = AuthSchema.extend({
 // =================================================================
 // SCHEMAS PARA O FORMULÁRIO DE ONBOARDING
 // =================================================================
-
 export const OnboardingRequestSchema = z
   .object({
     profileImage: z
@@ -259,18 +256,27 @@ export const ProfessionalUserResponseSchema = BaseUserSchema.pick({
   fullName: z.string(),
   profileImage: z.string().url(),
   jobDescription: z.string(),
-  subcategoryName: z.string(),
+  socialLinks: SocialLinksSchema.pick({
+    instagram: true,
+    linkedin: true,
+  }).optional(),
+  category: CategorySchema.partial({ id: true, name: true }),
+  subcategory: SubcategorySchema.partial({ id: true, name: true }),
   rating: z.number(),
-  location: z.string().optional(),
+  location: LocationSchema.pick({
+    street: true,
+    number: true,
+    complement: true,
+    communityId: true,
+  }).extend({ communityName: z.string() }),
   certifications: z.array(CertificationSchema).optional(),
   projects: z.array(ProjectSchema).optional(),
   services: z.array(ServiceSchema).optional(),
 });
+
 // =================================================================
 // TIPOS EXPORTADOS
 // =================================================================
-
-// --- Tipos para o modelo de dados completo ---
 export type User = z.infer<typeof BaseUserSchema>;
 export type UserProfile = z.infer<typeof UserProfileSchema>;
 export type ProjectImage = z.infer<typeof ProjectImageSchema>;

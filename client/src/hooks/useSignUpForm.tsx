@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Roles, SignupSchema, SignUpValues } from "@/types/user";
 import { isRole } from "@/lib/utils";
+import { getAnalytics } from "@/lib/analytics";
 
 export function useSignUpForm() {
   const [searchParams] = useSearchParams();
@@ -45,12 +46,17 @@ export function useSignUpForm() {
 
   const { mutate, isPending: isSignUpPending } = useMutation({
     mutationFn: (payload: SignUpValues) => signUpUser(payload),
-    onSuccess: () => {
+    onSuccess: (_, { email, role }) => {
+      const analytics = getAnalytics();
       toast({
         title: "Cadastro realizado com sucesso",
         description: "Seja bem-vindo ao ConectaMaré",
       });
       navigate("/login");
+      analytics.track("signed_up", {
+        email,
+        role,
+      });
     },
     onError: (error: any) => {
       const errorMessages: Record<string, string> = {

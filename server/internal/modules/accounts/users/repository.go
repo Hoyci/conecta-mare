@@ -5,6 +5,7 @@ import (
 	"conecta-mare-server/internal/database/models"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -162,11 +163,12 @@ func (ur *usersRepository) GetProfessionalUsers(ctx context.Context) ([]*common.
 					up.profile_image,
 					up.job_description,
 					5 as rating,
-					l.neighborhood as location
+					cm."name" as location
 			FROM users u
 			INNER JOIN user_profiles up ON up.user_id = u.id
 			inner JOIN subcategories s ON s.id = up.subcategory_id 
 			inner join locations l on l.user_profile_id = up.id 
+			inner join communities cm on cm.id = l.community_id
 			WHERE u."role" = 'professional' 
 			and up.job_description is not null
 			AND u.deleted_at IS NULL;
@@ -192,83 +194,97 @@ func (ur *usersRepository) GetProfessionalByID(ctx context.Context, ID string) (
 		&raw,
 		`
 		SELECT 
-			u.id as user_id,
-			u.email,
-			up.full_name,
-			up.profile_image,
-			up.job_description,
-			up.phone,
-			up.social_links,
-			sc.name as subcategory_name,
-			5 as rating,
-			l.neighborhood as location,
-		(
-				SELECT json_agg(
-						json_build_object(
-								'name', p.name,
-								'description', p.description,
-								'images', COALESCE(images.images, '[]'::json)
-						)
-				)
-				FROM projects p
-				LEFT JOIN LATERAL (
-						SELECT json_agg(
-								json_build_object(
-										'url', pi.url,
-										'ordering', pi.ordering
-								)
-						) AS images
-						FROM project_images pi
-						WHERE pi.project_id = p.id
-				) images ON true
-				WHERE p.user_profile_id = up.id
-		) AS projects,
-		(
-				SELECT json_agg(
-						json_build_object(
-								'institution', ce.institution,
-								'course_name', ce.course_name,
-								'start_date', TO_CHAR(ce.start_date, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
-								'end_date', CASE 
-										WHEN ce.end_date IS NULL THEN NULL 
-										ELSE TO_CHAR(ce.end_date, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') 
-										END
-								)
-						)
-						FROM certifications ce
-						WHERE ce.user_profile_id = up.id
-		) AS certifications,
-		(
-		SELECT json_agg(
+				u.id AS user_id,
+				u.email,
+				up.full_name,
+				up.profile_image,
+				up.job_description,
+				up.phone,
+				up.social_links,
+				5 AS rating,
+				jsonb_build_object(
+            'community_id', cm.id,
+            'community_name', cm.name,
+            'street', l.street,
+            'number', l."number",
+            'complement', l.complement
+				) AS location,
 				json_build_object(
-						'name', se.name,
-						'description', se.description,
-						'price', se.price,
-						'own_location_price', se.own_location_price,
-						'images', COALESCE(images.images, '[]'::json)
-				)
-		)
-		FROM services se
-		LEFT JOIN LATERAL (
-				SELECT json_agg(
-						json_build_object(
-								'url', sei.url,
-								'ordering', sei.ordering
-								)
-						) AS images
-						FROM service_images sei
-						WHERE sei.service_id = se.id
-				) images ON true
-				WHERE se.user_profile_id = up.id
-		) AS services
+						'id', ca.id,
+						'name', ca.name
+				) AS category,
+				json_build_object(
+						'id', sc.id,
+						'name', sc.name
+				) AS subcategory,
+				(
+					SELECT json_agg(
+							json_build_object(
+									'name', p.name,
+									'description', p.description,
+									'images', COALESCE(images.images, '[]'::JSON)
+							)
+					)
+					FROM projects p
+					LEFT JOIN LATERAL (
+							SELECT json_agg(
+									json_build_object(
+											'url', pi.url,
+											'ordering', pi.ordering
+									)
+							) AS images
+							FROM project_images pi
+							WHERE pi.project_id = p.id
+					) images ON TRUE
+					WHERE p.user_profile_id = up.id
+				) AS projects,
+				(
+					SELECT json_agg(
+							json_build_object(
+									'institution', ce.institution,
+									'course_name', ce.course_name,
+									'start_date', TO_CHAR(ce.start_date, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
+									'end_date', CASE 
+											WHEN ce.end_date IS NULL THEN NULL
+											ELSE TO_CHAR(ce.end_date, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')
+									END
+							)
+					)
+					FROM certifications ce
+					WHERE ce.user_profile_id = up.id
+				) AS certifications,
+				(
+					SELECT json_agg(
+							json_build_object(
+									'name', se.name,
+									'description', se.description,
+									'price', se.price,
+									'own_location_price', se.own_location_price,
+									'images', COALESCE(images.images, '[]'::JSON)
+							)
+					)
+					FROM services se
+					LEFT JOIN LATERAL (
+							SELECT json_agg(
+									json_build_object(
+											'url', sei.url,
+											'ordering', sei.ordering
+									)
+							) AS images
+							FROM service_images sei
+							WHERE sei.service_id = se.id
+					) images ON TRUE
+					WHERE se.user_profile_id = up.id
+				) AS services
 		FROM users u
 		INNER JOIN user_profiles up ON up.user_id = u.id
-		inner JOIN subcategories sc ON sc.id = up.subcategory_id 
-		inner join locations l on l.user_profile_id = up.id
-		WHERE 
-			u.role = 'professional' 
-			AND u.id = $1
-			AND u.deleted_at IS NULL;
+		INNER JOIN subcategories sc ON sc.id = up.subcategory_id
+		INNER JOIN categories ca ON ca.id = sc.category_id
+		INNER JOIN locations l ON l.user_profile_id = up.id
+		INNER JOIN communities cm ON cm.id = l.community_id
+		WHERE u.role = 'professional'
+				AND u.id = $1
+				AND u.deleted_at IS NULL;
 		`,
 		ID,
 	)
@@ -283,30 +299,31 @@ func (ur *usersRepository) GetProfessionalByID(ctx context.Context, ID string) (
 	var certifications []common.Certification
 	var services []common.Service
 
-	if err := raw.ProjectsJSON.Unmarshal(&projects); err != nil {
-		return nil, fmt.Errorf("error parsing services json: %w", err)
+	if err := json.Unmarshal(raw.ProjectsJSON, &projects); err != nil {
+		return nil, fmt.Errorf("error decoding projects: %w", err)
 	}
-	if err := raw.CertificationsJSON.Unmarshal(&certifications); err != nil {
-		return nil, fmt.Errorf("error parsing certifications json: %w", err)
+	if err := json.Unmarshal(raw.CertificationsJSON, &certifications); err != nil {
+		return nil, fmt.Errorf("error decoding certifications: %w", err)
 	}
-	if err := raw.ServicesJSON.Unmarshal(&services); err != nil {
-		return nil, fmt.Errorf("error parsing services json: %w", err)
+	if err := json.Unmarshal(raw.ServicesJSON, &services); err != nil {
+		return nil, fmt.Errorf("error decoding services: %w", err)
 	}
 
 	professional := &common.GetProfessionalByIDResponse{
-		UserID:          raw.UserID,
-		Email:           raw.Email,
-		FullName:        raw.FullName,
-		ProfileImage:    raw.ProfileImage,
-		JobDescription:  raw.JobDescription,
-		Phone:           raw.Phone,
-		SocialLinks:     raw.SocialLinks,
-		Location:        raw.Location,
-		Rating:          raw.Rating,
-		SubcategoryName: raw.SubcategoryName,
-		Projects:        projects,
-		Certifications:  certifications,
-		Services:        services,
+		UserID:         raw.UserID,
+		Email:          raw.Email,
+		FullName:       raw.FullName,
+		ProfileImage:   raw.ProfileImage,
+		JobDescription: raw.JobDescription,
+		Phone:          raw.Phone,
+		SocialLinks:    raw.SocialLinks,
+		Location:       raw.Location,
+		Rating:         raw.Rating,
+		Category:       raw.Category,
+		Subcategory:    raw.Subcategory,
+		Projects:       projects,
+		Certifications: certifications,
+		Services:       services,
 	}
 
 	return professional, nil
