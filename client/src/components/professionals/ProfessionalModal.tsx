@@ -22,7 +22,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getProfessionalByID } from "@/services/user-service";
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
-import { formatCentsToBRL } from "@/lib/utils";
+import { createWhatsAppMessage, formatCentsToBRL } from "@/lib/utils";
 import { getAnalytics } from "@/lib/analytics";
 
 interface ProfessionalModalProps {
@@ -85,11 +85,8 @@ const ProfessionalModal = ({
       service_name: serviceName,
     });
 
-    toast({
-      title: "Solicitação enviada!",
-      description: `Sua mensagem sobre o serviço "${serviceName}" foi enviada para ${professional?.fullName}. Aguarde o contato!`,
-      variant: "default",
-    });
+
+    window.open(createWhatsAppMessage(serviceName, professional.phone), "_blank");
   };
 
   const goToPreviousImage = () => {

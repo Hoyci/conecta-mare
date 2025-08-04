@@ -71,3 +71,17 @@ export function parseBRLToCents(value: number): number {
 export function isRole(value: string | null) {
   return ROLES.includes(value as Roles);
 }
+
+export function createWhatsAppMessage(serviceName: string, phoneNumber: string) {
+  const message = `Olá! 😊\n` +
+    `Vi seu perfil no Conecta-Mare e me interessei pelo serviço de *${serviceName}* que você oferece \n` +
+    `Gostaria de saber mais detalhes e como podemos agendar.\n` +
+    `Obrigado! 🙌✨`;
+
+  const params = new URLSearchParams({
+    phone: phoneNumber,
+    text: message
+  });
+
+  return `https://api.whatsapp.com/send?${params.toString()}`;
+}
