@@ -222,7 +222,7 @@ func (s *onboardingsService) createProjectsTx(
 		}
 
 		for _, img := range imageWithIDs {
-			pjt.Images = append(pjt.Images, common.ProjectImageWithID{ID: img.ID, URL: img.URL, Ordering: img.Ordering})
+			pjt.Images = append(pjt.Images, common.ProjectImage{ID: img.ID, URL: img.URL, Ordering: img.Ordering})
 		}
 		pjt.Images = imageWithIDs
 
@@ -252,7 +252,7 @@ func (s *onboardingsService) createServicesTx(
 		}
 
 		for _, img := range imageWithIDs {
-			service.Images = append(service.Images, common.ServiceImageWithID{ID: img.ID, URL: img.URL, Ordering: img.Ordering})
+			service.Images = append(service.Images, common.ServiceImage{ID: img.ID, URL: img.URL, Ordering: img.Ordering})
 		}
 		service.Images = imageWithIDs
 
@@ -270,7 +270,7 @@ func (s *onboardingsService) uploadProjectImages(
 	userID, projectID string,
 	index int,
 	projectName string,
-) ([]common.ProjectImageWithID, error) {
+) ([]common.ProjectImage, error) {
 	formField := fmt.Sprintf("projects[%d].images", index)
 	files, ok := r.MultipartForm.File[formField]
 	if !ok || len(files) == 0 {
@@ -278,7 +278,7 @@ func (s *onboardingsService) uploadProjectImages(
 		return nil, nil
 	}
 
-	var result []common.ProjectImageWithID
+	var result []common.ProjectImage
 	for _, file := range files {
 		imageID := uid.New("projectimg")
 		objectName := fmt.Sprintf("projects/%s/%s/%s", userID, projectID, imageID)
@@ -289,7 +289,7 @@ func (s *onboardingsService) uploadProjectImages(
 			return nil, exceptions.MakeGenericApiError()
 		}
 
-		result = append(result, common.ProjectImageWithID{
+		result = append(result, common.ProjectImage{
 			ID:  imageID,
 			URL: url,
 		})
@@ -304,7 +304,7 @@ func (s *onboardingsService) uploadServiceImages(
 	userID, serviceID string,
 	index int,
 	serviceName string,
-) ([]common.ServiceImageWithID, error) {
+) ([]common.ServiceImage, error) {
 	formField := fmt.Sprintf("services[%d].images", index)
 	files, ok := r.MultipartForm.File[formField]
 	if !ok || len(files) == 0 {
@@ -312,7 +312,7 @@ func (s *onboardingsService) uploadServiceImages(
 		return nil, nil
 	}
 
-	var result []common.ServiceImageWithID
+	var result []common.ServiceImage
 	for _, file := range files {
 		imageID := uid.New("service_img")
 		objectName := fmt.Sprintf("services/%s/%s/%s", userID, serviceID, imageID)
@@ -323,7 +323,7 @@ func (s *onboardingsService) uploadServiceImages(
 			return nil, exceptions.MakeGenericApiError()
 		}
 
-		result = append(result, common.ServiceImageWithID{
+		result = append(result, common.ServiceImage{
 			ID:  imageID,
 			URL: url,
 		})

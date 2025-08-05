@@ -16,8 +16,7 @@ import {
   ChevronRight,
   MessageCircle,
 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import { ProfessionalUserResponse, Project } from "@/types/user";
+import { ProfessionalUserResponse, Project, Service } from "@/types/user";
 import { useQuery } from "@tanstack/react-query";
 import { getProfessionalByID } from "@/services/user-service";
 import { format } from "date-fns";
@@ -36,7 +35,6 @@ const ProfessionalModal = ({
   isOpen,
   onClose,
 }: ProfessionalModalProps) => {
-  const { toast } = useToast();
   const [selectedService, setSelectedService] = useState<Project | null>(null);
   const [isImageModalOpen, setImageModalOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -76,17 +74,17 @@ const ProfessionalModal = ({
     }
   }, [activeTab, userID]);
 
-  const handleContactService = (serviceName: string) => {
+  const handleContactService = (service: Service) => {
     const analytics = getAnalytics();
-    // Adicionar serviceID
     analytics.track("service_interest", {
       user_id: userID,
       professional_id: userID,
-      service_name: serviceName,
+      service_name: service.name,
+      service_id: service.id,
     });
 
 
-    window.open(createWhatsAppMessage(serviceName, professional.phone), "_blank");
+    window.open(createWhatsAppMessage(service.name, professional.phone), "_blank");
   };
 
   const goToPreviousImage = () => {
@@ -222,9 +220,9 @@ const ProfessionalModal = ({
 
                       <div className="flex flex-col gap-4">
                         {professional.certifications.map(
-                          ({ courseName, institution, startDate, endDate }) => (
+                          ({ id, courseName, institution, startDate, endDate }) => (
                             <div
-                              key={`${courseName}-${institution}-${startDate}`}
+                              key={id}
                               className="py-2 px-4 border border-gray-200 rounded-md shadow-sm bg-white"
                             >
                               <h4 className="font-semibold text-gray-900 mb-1">
@@ -258,26 +256,26 @@ const ProfessionalModal = ({
                     </h3>
                   </div>
                   <div className="flex flex-col gap-4">
-                    {professional.services.map(({ name, description, price }) => (
+                    {professional.services.map((service) => (
                       <div
-                        key={name}
+                        key={service.id}
                         className="py-3 px-4 border border-gray-200 rounded-md shadow-sm bg-white flex justify-between items-center"
                       >
                         <div>
                           <h4 className="font-semibold text-gray-900 mb-1">
-                            {name}
+                            {service.name}
                           </h4>
-                          <p className="text-gray-700 mb-1">{description}</p>
+                          <p className="text-gray-700 mb-1">{service.description}</p>
                           <p className="text-gray-700 mb-1">
-                            {price === 0
+                            {service.price === 0
                               ? "Gratuito"
-                              : `${formatCentsToBRL(price)}`}
+                              : `${formatCentsToBRL(service.price)}`}
                           </p>
                         </div>
                         <Button
                           size="sm"
                           className="bg-conecta-green hover:bg-conecta-green-dark text-white"
-                          onClick={() => handleContactService(name)}
+                          onClick={() => handleContactService(service)}
                         >
                           <MessageCircle size={16} className="mr-1" />
                           Contatar
