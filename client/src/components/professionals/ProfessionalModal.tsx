@@ -14,14 +14,14 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  MessageCircle,
 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import { ProfessionalUserResponse, Project } from "@/types/user";
+import { ProfessionalUserResponse, Project, Service } from "@/types/user";
 import { useQuery } from "@tanstack/react-query";
 import { getProfessionalByID } from "@/services/user-service";
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
-import { formatCentsToBRL } from "@/lib/utils";
+import { createWhatsAppMessage, formatCentsToBRL } from "@/lib/utils";
 import { getAnalytics } from "@/lib/analytics";
 
 interface ProfessionalModalProps {
@@ -35,7 +35,6 @@ const ProfessionalModal = ({
   isOpen,
   onClose,
 }: ProfessionalModalProps) => {
-  const { toast } = useToast();
   const [selectedService, setSelectedService] = useState<Project | null>(null);
   const [isImageModalOpen, setImageModalOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -62,25 +61,43 @@ const ProfessionalModal = ({
     }
   }, [isSuccess, professional]);
 
-  const handleContact = () => {
-    toast({
-      title: "Solicitação enviada!",
-      description: `Sua mensagem foi enviada para ${professional?.fullName}. Aguarde o contato!`,
-      variant: "default",
+
+  const [activeTab, setActiveTab] = useState("about");
+
+  useEffect(() => {
+    if (activeTab === "services") {
+      const analytics = getAnalytics();
+      analytics.track("viewed_services_tab", {
+        user_id: userID,
+        professional_id: userID,
+      });
+    }
+  }, [activeTab, userID]);
+
+  const handleContactService = (service: Service) => {
+    const analytics = getAnalytics();
+    analytics.track("service_interest", {
+      user_id: userID,
+      professional_id: userID,
+      service_name: service.name,
+      service_id: service.id,
     });
+
+
+    window.open(createWhatsAppMessage(service.name, professional.phone), "_blank");
   };
 
   const goToPreviousImage = () => {
     if (!selectedService) return;
     setCurrentImageIndex((prevIndex: number) =>
-      prevIndex === 0 ? selectedService.images.length - 1 : prevIndex - 1,
+      prevIndex === 0 ? selectedService.images.length - 1 : prevIndex - 1
     );
   };
 
   const goToNextImage = () => {
     if (!selectedService) return;
     setCurrentImageIndex((prevIndex: number) =>
-      prevIndex === selectedService.images.length - 1 ? 0 : prevIndex + 1,
+      prevIndex === selectedService.images.length - 1 ? 0 : prevIndex + 1
     );
   };
 
@@ -128,6 +145,7 @@ const ProfessionalModal = ({
           </DialogHeader>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-4">
+            {/* Coluna do perfil */}
             <div className="md:col-span-1">
               <div className="rounded-lg overflow-hidden mb-4">
                 <img
@@ -165,20 +183,12 @@ const ProfessionalModal = ({
                     </span>
                   </div>
                 </div>
-
-                <div className="flex gap-2 mt-4">
-                  <Button
-                    className="w-full bg-conecta-green hover:bg-conecta-green-dark text-white"
-                    onClick={handleContact}
-                  >
-                    Contatar
-                  </Button>
-                </div>
               </div>
             </div>
 
+            {/* Coluna com as tabs */}
             <div className="md:col-span-2">
-              <Tabs defaultValue="about">
+              <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="w-full">
                   <TabsTrigger value="about" className="flex-1">
                     Sobre
@@ -194,6 +204,7 @@ const ProfessionalModal = ({
                   </TabsTrigger>
                 </TabsList>
 
+                {/* Tab: Sobre */}
                 <TabsContent value="about" className="mt-4">
                   <div className="space-y-4">
                     <div>
@@ -209,9 +220,9 @@ const ProfessionalModal = ({
 
                       <div className="flex flex-col gap-4">
                         {professional.certifications.map(
-                          ({ courseName, institution, startDate, endDate }) => (
+                          ({ id, courseName, institution, startDate, endDate }) => (
                             <div
-                              key={`${courseName}-${institution}-${startDate}`}
+                              key={id}
                               className="py-2 px-4 border border-gray-200 rounded-md shadow-sm bg-white"
                             >
                               <h4 className="font-semibold text-gray-900 mb-1">
@@ -230,12 +241,14 @@ const ProfessionalModal = ({
                                   : "Presente"}
                               </p>
                             </div>
-                          ),
+                          )
                         )}
                       </div>
                     </div>
                   </div>
                 </TabsContent>
+
+                {/* Tab: Serviços */}
                 <TabsContent value="services" className="mt-4">
                   <div>
                     <h3 className="font-semibold mb-2 text-lg">
@@ -243,32 +256,41 @@ const ProfessionalModal = ({
                     </h3>
                   </div>
                   <div className="flex flex-col gap-4">
-                    {professional.services.map(
-                      ({ name, description, price }) => (
-                        <div
-                          key={name}
-                          className="py-2 px-4 border border-gray-200 rounded-md shadow-sm bg-white"
-                        >
+                    {professional.services.map((service) => (
+                      <div
+                        key={service.id}
+                        className="py-3 px-4 border border-gray-200 rounded-md shadow-sm bg-white flex justify-between items-center"
+                      >
+                        <div>
                           <h4 className="font-semibold text-gray-900 mb-1">
-                            {name}
+                            {service.name}
                           </h4>
-                          <p className="text-gray-700 mb-1">{description}</p>
+                          <p className="text-gray-700 mb-1">{service.description}</p>
                           <p className="text-gray-700 mb-1">
-                            {price === 0
+                            {service.price === 0
                               ? "Gratuito"
-                              : `${formatCentsToBRL(price)}`}
+                              : `${formatCentsToBRL(service.price)}`}
                           </p>
                         </div>
-                      ),
-                    )}
+                        <Button
+                          size="sm"
+                          className="bg-conecta-green hover:bg-conecta-green-dark text-white"
+                          onClick={() => handleContactService(service)}
+                        >
+                          <MessageCircle size={16} className="mr-1" />
+                          Contatar
+                        </Button>
+                      </div>
+                    ))}
                   </div>
                 </TabsContent>
+
+                {/* Tab: Portfólio */}
                 <TabsContent value="portfolio">
                   <div>
                     <h3 className="font-semibold mb-2 text-lg">
                       Projetos realizados
                     </h3>
-
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4">
                       {professional.projects.map((project: Project) => (
                         <div
@@ -294,6 +316,8 @@ const ProfessionalModal = ({
                     </div>
                   </div>
                 </TabsContent>
+
+                {/* Tab: Avaliações */}
                 <TabsContent value="reviews" className="mt-4">
                   <div className="space-y-4">
                     <div className="bg-gray-50 p-4 rounded-md">
@@ -322,7 +346,6 @@ const ProfessionalModal = ({
                         </span>
                       </div>
                     </div>
-
                     <div>
                       <h3 className="font-semibold mb-2">
                         Comentários recentes
@@ -335,6 +358,8 @@ const ProfessionalModal = ({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal para imagens do portfólio */}
       <Dialog open={isImageModalOpen} onOpenChange={setImageModalOpen}>
         <DialogContent className="bg-black/90 p-0 max-w-4xl max-h-[90vh] flex items-center justify-center border-none">
           <button
@@ -378,3 +403,4 @@ const ProfessionalModal = ({
 };
 
 export default ProfessionalModal;
+

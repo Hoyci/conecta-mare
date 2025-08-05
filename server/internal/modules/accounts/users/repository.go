@@ -220,15 +220,17 @@ func (ur *usersRepository) GetProfessionalByID(ctx context.Context, ID string) (
 				(
 					SELECT json_agg(
 							json_build_object(
-									'name', p.name,
-									'description', p.description,
-									'images', COALESCE(images.images, '[]'::JSON)
+								'id', p.id,
+								'name', p.name,
+								'description', p.description,
+								'images', COALESCE(images.images, '[]'::JSON)
 							)
 					)
 					FROM projects p
 					LEFT JOIN LATERAL (
 							SELECT json_agg(
 									json_build_object(
+											'id', pi.id,
 											'url', pi.url,
 											'ordering', pi.ordering
 									)
@@ -241,6 +243,7 @@ func (ur *usersRepository) GetProfessionalByID(ctx context.Context, ID string) (
 				(
 					SELECT json_agg(
 							json_build_object(
+									'id', ce.id,
 									'institution', ce.institution,
 									'course_name', ce.course_name,
 									'start_date', TO_CHAR(ce.start_date, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
@@ -256,6 +259,7 @@ func (ur *usersRepository) GetProfessionalByID(ctx context.Context, ID string) (
 				(
 					SELECT json_agg(
 							json_build_object(
+									'id', se.id,
 									'name', se.name,
 									'description', se.description,
 									'price', se.price,
@@ -267,8 +271,9 @@ func (ur *usersRepository) GetProfessionalByID(ctx context.Context, ID string) (
 					LEFT JOIN LATERAL (
 							SELECT json_agg(
 									json_build_object(
-											'url', sei.url,
-											'ordering', sei.ordering
+										'id', sei.id,
+										'url', sei.url,
+										'ordering', sei.ordering
 									)
 							) AS images
 							FROM service_images sei

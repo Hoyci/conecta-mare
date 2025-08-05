@@ -59,7 +59,16 @@ const Onboarding = () => {
     setCurrentStep((prev: number) => Math.max(prev - 1, 1));
   };
 
-  const onSubmit = (data: OnboardingRequestValues) => mutate(data);
+  const onSubmit = (data: OnboardingRequestValues) => {
+    const cleanedPhone = data.phone.replace(/\D/g, '');
+
+    const formattedData = {
+      ...data,
+      phone: `55${cleanedPhone}`,
+    };
+
+    mutate(formattedData);
+  };
 
   return (
     <OnboardingLayout>

@@ -5,7 +5,7 @@ import { CategorySchema, SubcategorySchema } from "./categories";
 // CONSTANTES E TIPOS BASE
 // =================================================================
 
-const FileListClass = typeof FileList !== "undefined" ? FileList : class {};
+const FileListClass = typeof FileList !== "undefined" ? FileList : class { };
 export const ROLES = ["client", "professional"] as const;
 const DATE_SCHEMA = z.date().nullable();
 
@@ -65,6 +65,7 @@ export const ProjectSchema = z.object({
 
 export const CertificationSchema = z
   .object({
+    id: z.string().optional(),
     institution: z.string({ message: "O nome da instituição é obrigatório." }),
     courseName: z.string({ message: "O nome do curso é obrigatório." }),
     startDate: z.coerce.date({
@@ -92,6 +93,7 @@ export const ServiceImageSchema = z.object({
 });
 
 export const ServiceSchema = z.object({
+  id: z.string().optional(),
   name: z.string().min(1, "O nome do serviço é obrigatório."),
   description: z.string().min(1, "A descrição do serviço é obrigatória."),
   price: z.coerce.number().min(1, "O preço deve ser um valor positivo."),
@@ -254,6 +256,7 @@ export const ProfessionalUserResponseSchema = BaseUserSchema.pick({
 }).extend({
   userId: z.string(),
   fullName: z.string(),
+  phone: z.string(),
   profileImage: z.string().url(),
   jobDescription: z.string(),
   socialLinks: SocialLinksSchema.pick({

@@ -79,37 +79,39 @@ type (
 	}
 
 	Project struct {
-		ID          string               `json:"id" db:"id"`
-		Name        string               `json:"name" db:"name"`
-		Description string               `json:"description" db:"description"`
-		Images      []ProjectImageWithID `json:"images" db:"images"`
+		ID          string         `json:"id"`
+		Name        string         `json:"name"`
+		Description string         `json:"description"`
+		Images      []ProjectImage `json:"images"`
 	}
 
-	ProjectImageWithID struct {
-		ID       string `json:"id" db:"id"`
-		URL      string `json:"url" db:"url"`
-		Ordering int    `json:"ordering" db:"ordering"`
+	ProjectImage struct {
+		ID       string `json:"id"`
+		URL      string `json:"url"`
+		Ordering int    `json:"ordering"`
 	}
 
 	Certification struct {
-		Institution string     `json:"institution" db:"institution"`
-		CourseName  string     `json:"course_name" db:"course_name"`
-		StartDate   time.Time  `json:"start_date" db:"start_date"`
-		EndDate     *time.Time `json:"end_date" db:"end_date"`
+		ID          string     `json:"id"`
+		Institution string     `json:"institution"`
+		CourseName  string     `json:"course_name"`
+		StartDate   time.Time  `json:"start_date"`
+		EndDate     *time.Time `json:"end_date"`
 	}
 
 	Service struct {
-		Name             string               `json:"name" db:"name"`
-		Description      string               `json:"description" db:"description"`
-		Price            int                  `json:"price" db:"price"`
-		OwnLocationPrice *int                 `json:"own_location_price" db:"own_location_price"`
-		Images           []ServiceImageWithID `json:"images" db:"images"`
+		ID               string         `json:"id"`
+		Name             string         `json:"name"`
+		Description      string         `json:"description"`
+		Price            int            `json:"price"`
+		OwnLocationPrice *int           `json:"own_location_price"`
+		Images           []ServiceImage `json:"images"`
 	}
 
-	ServiceImageWithID struct {
-		ID       string `json:"id" db:"id"`
-		URL      string `json:"url" db:"url"`
-		Ordering int    `json:"ordering" db:"ordering"`
+	ServiceImage struct {
+		ID       string `json:"id"`
+		URL      string `json:"url"`
+		Ordering int    `json:"ordering"`
 	}
 
 	Location struct {
