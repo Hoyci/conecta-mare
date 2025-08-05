@@ -2,7 +2,7 @@ package communities
 
 import (
 	"conecta-mare-server/internal/common"
-	"conecta-mare-server/internal/database/models"
+	"conecta-mare-server/internal/databases/postgres/models"
 	"conecta-mare-server/pkg/exceptions"
 	"context"
 	"log/slog"

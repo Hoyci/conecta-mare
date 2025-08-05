@@ -1,7 +1,7 @@
 package locations
 
 import (
-	"conecta-mare-server/internal/database/models"
+	"conecta-mare-server/internal/databases/postgres/models"
 	"conecta-mare-server/pkg/uid"
 	"time"
 )

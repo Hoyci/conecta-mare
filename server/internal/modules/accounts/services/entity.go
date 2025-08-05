@@ -1,7 +1,7 @@
 package services
 
 import (
-	"conecta-mare-server/internal/database/models"
+	"conecta-mare-server/internal/databases/postgres/models"
 	"time"
 )
 

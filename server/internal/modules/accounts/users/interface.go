@@ -2,7 +2,7 @@ package users
 
 import (
 	"conecta-mare-server/internal/common"
-	"conecta-mare-server/internal/database/models"
+	"conecta-mare-server/internal/databases/postgres/models"
 	"conecta-mare-server/internal/modules/accounts/session"
 	"conecta-mare-server/internal/modules/accounts/userprofiles"
 	"conecta-mare-server/pkg/exceptions"

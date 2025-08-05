@@ -18,11 +18,17 @@ type Config struct {
 	AppName     string `mapstructure:"APP_NAME"`
 	DebugMode   bool   `mapstructure:"DEBUG"`
 
-	DBUsername string `mapstructure:"DB_USERNAME"`
-	DBPassword string `mapstructure:"DB_PASSWORD"`
-	DBHost     string `mapstructure:"DB_HOST"`
-	DBPort     string `mapstructure:"DB_PORT"`
-	DBDatabase string `mapstructure:"DB_DATABASE"`
+	PGUsername string `mapstructure:"PG_USERNAME"`
+	PGPassword string `mapstructure:"PG_PASSWORD"`
+	PGHost     string `mapstructure:"PG_HOST"`
+	PGPort     string `mapstructure:"PG_PORT"`
+	PGDatabase string `mapstructure:"PG_DATABASE"`
+
+	CHUsername string `mapstructure:"CH_USERNAME"`
+	CHPassword string `mapstructure:"CH_PASSWORD"`
+	CHHost     string `mapstructure:"CH_HOST"`
+	CHPort     string `mapstructure:"CH_PORT"`
+	CHDatabase string `mapstructure:"CH_DATABASE"`
 
 	RedisHost string `mapstructure:"REDIS_HOST"`
 	RedisPort string `mapstructure:"REDIS_PORT"`

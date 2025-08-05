@@ -2,7 +2,8 @@ package main
 
 import (
 	"conecta-mare-server/internal/config"
-	"conecta-mare-server/internal/database"
+	"conecta-mare-server/internal/databases/clickhouse"
+	"conecta-mare-server/internal/databases/postgres"
 	"conecta-mare-server/internal/modules/accounts/categories"
 	"conecta-mare-server/internal/modules/accounts/certifications"
 	"conecta-mare-server/internal/modules/accounts/communities"
@@ -78,9 +79,13 @@ func main() {
 	router := server.NewRouter()
 	server := server.NewServer(cfg.Port, router)
 
-	logger.Info("Starting database connection")
-	db := database.New(cfg.DBUsername, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBDatabase)
-	defer db.Close()
+	logger.Info("Starting postgres connection")
+	pg := postgres.New(cfg.PGUsername, cfg.PGPassword, cfg.PGHost, cfg.PGPort, cfg.PGDatabase)
+	defer pg.Close()
+
+	logger.Info("Starting clickHouse connection")
+	ch := clickhouse.New(cfg.CHUsername, cfg.CHPassword, cfg.CHHost, cfg.CHPort, cfg.CHDatabase)
+	defer ch.Close()
 
 	logger.Info("Starting storage connection")
 	storageClient := storage.NewStorageClient(
@@ -97,23 +102,23 @@ func main() {
 
 	tokenProvider := jwt.NewProvider(cfg.JWTAccessKey, cfg.JWTRefreshKey)
 
-	subcategoriesRepo := subcategories.NewRepository(db.DB())
-	categoriesRepo := categories.NewRepository(db.DB())
-	sessionsRepo := session.NewRepository(db.DB())
-	usersRepo := users.NewRepository(db.DB())
-	userProfilesRepo := userprofiles.NewRepository(db.DB())
-	certificationsRepo := certifications.NewRepository(db.DB())
-	projectsRepo := projects.NewRepository(db.DB())
-	projectImagesRepo := projectimages.NewRepository(db.DB())
-	servicesRepo := services.NewRepository(db.DB())
-	serviceImagesRepo := serviceimages.NewRepository(db.DB())
-	locationsRepo := locations.NewRepository(db.DB())
-	communitiesRepo := communities.NewRepository(db.DB())
+	subcategoriesRepo := subcategories.NewRepository(pg.DB())
+	categoriesRepo := categories.NewRepository(pg.DB())
+	sessionsRepo := session.NewRepository(pg.DB())
+	usersRepo := users.NewRepository(pg.DB())
+	userProfilesRepo := userprofiles.NewRepository(pg.DB())
+	certificationsRepo := certifications.NewRepository(pg.DB())
+	projectsRepo := projects.NewRepository(pg.DB())
+	projectImagesRepo := projectimages.NewRepository(pg.DB())
+	servicesRepo := services.NewRepository(pg.DB())
+	serviceImagesRepo := serviceimages.NewRepository(pg.DB())
+	locationsRepo := locations.NewRepository(pg.DB())
+	communitiesRepo := communities.NewRepository(pg.DB())
 
 	sessionsService := session.NewService(sessionsRepo, logger)
 	subcategoriesService := subcategories.NewService(subcategoriesRepo, logger)
 	usersService := users.NewService(
-		db.DB(),
+		pg.DB(),
 		usersRepo,
 		userProfilesRepo,
 		sessionsService,
@@ -123,7 +128,7 @@ func main() {
 	)
 	categoriesService := categories.NewService(categoriesRepo, subcategoriesService, usersService, logger)
 	onboardingsService := onboardings.NewService(
-		db.DB(),
+		pg.DB(),
 		usersRepo,
 		userProfilesRepo,
 		projectsRepo,
