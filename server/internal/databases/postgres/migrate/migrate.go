@@ -18,7 +18,7 @@ func main() {
 
 	dsn := fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		cfg.DBUsername, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBDatabase,
+		cfg.PGUsername, cfg.PGPassword, cfg.PGHost, cfg.PGPort, cfg.PGDatabase,
 	)
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
@@ -33,7 +33,7 @@ func main() {
 
 	m, err := migrate.NewWithDatabaseInstance(
 		"file://internal/database/migrate/migrations",
-		cfg.DBDatabase,
+		cfg.PGDatabase,
 		driver,
 	)
 	if err != nil {

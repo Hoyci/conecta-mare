@@ -1,52 +1,22 @@
+import { z } from "zod";
 
-export type TimeRange = "daily" | "weekly" | "monthly";
+const DailyVisitSchema = z.object({
+  date: z.string().datetime(),
+  visits: z.number().int().nonnegative(),
+});
 
-export type ProfileMetrics = {
-  profileViews: {
-    total: number;
-    trends: { [key in TimeRange]: { date: string; value: number }[] };
-  };
-  conversionRate: {
-    rate: number;
-    trends: { [key in TimeRange]: { date: string; value: number }[] };
-  };
-  ratings: {
-    average: number;
-    total: number;
-    recent: ClientFeedback[];
-  };
-  services: ServiceMetric[];
-  benchmarking: {
-    profileViews: { user: number; average: number };
-    conversionRate: { user: number; average: number };
-    ratings: { user: number; average: number };
-  };
-  notifications: Notification[];
-};
+const MetricsSchema = z.object({
+  currentWeekVisits: z.number().int().nonnegative(),
+  percentageChange: z.number(),
+  currentWeekData: z.array(DailyVisitSchema),
+});
 
-export type ClientFeedback = {
-  id: string;
-  clientName: string;
-  clientAvatar?: string;
-  rating: number;
-  comment: string;
-  date: string;
-};
+export const UserProfileViewsResponseSchema = z.object({
+  metrics: MetricsSchema,
+});
 
-export type ServiceMetric = {
-  id: string;
-  name: string;
-  views: number;
-  conversions: number;
-  trend: "up" | "down" | "stable";
-  trendPercentage: number;
-};
-
-export type Notification = {
-  id: string;
-  type: "milestone" | "review" | "tip";
-  title: string;
-  description: string;
-  date: string;
-  read: boolean;
-};
+export type DailyVisit = z.infer<typeof DailyVisitSchema>;
+export type Metrics = z.infer<typeof MetricsSchema>;
+export type UserProfileViewsResponse = z.infer<
+  typeof UserProfileViewsResponseSchema
+>;

@@ -2,7 +2,7 @@ package categories
 
 import (
 	"conecta-mare-server/internal/common"
-	"conecta-mare-server/internal/database/models"
+	"conecta-mare-server/internal/databases/postgres/models"
 	"context"
 	"database/sql"
 	"errors"

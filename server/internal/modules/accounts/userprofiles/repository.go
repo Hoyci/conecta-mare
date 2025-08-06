@@ -1,7 +1,7 @@
 package userprofiles
 
 import (
-	"conecta-mare-server/internal/database/models"
+	"conecta-mare-server/internal/databases/postgres/models"
 	"context"
 	"database/sql"
 	"errors"

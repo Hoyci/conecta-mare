@@ -18,11 +18,17 @@ type Config struct {
 	AppName     string `mapstructure:"APP_NAME"`
 	DebugMode   bool   `mapstructure:"DEBUG"`
 
-	DBUsername string `mapstructure:"DB_USERNAME"`
-	DBPassword string `mapstructure:"DB_PASSWORD"`
-	DBHost     string `mapstructure:"DB_HOST"`
-	DBPort     string `mapstructure:"DB_PORT"`
-	DBDatabase string `mapstructure:"DB_DATABASE"`
+	PGUsername string `mapstructure:"DB_USERNAME"`
+	PGPassword string `mapstructure:"DB_PASSWORD"`
+	PGHost     string `mapstructure:"DB_HOST"`
+	PGPort     string `mapstructure:"DB_PORT"`
+	PGDatabase string `mapstructure:"DB_DATABASE"`
+
+	CHUsername string `mapstructure:"CLICKHOUSE_USER"`
+	CHPassword string `mapstructure:"CLICKHOUSE_PASSWORD"`
+	CHHost     string `mapstructure:"CLICKHOUSE_HOST"`
+	CHPort     string `mapstructure:"CLICKHOUSE_PORT"`
+	CHDatabase string `mapstructure:"CLICKHOUSE_DB"`
 
 	RedisHost string `mapstructure:"REDIS_HOST"`
 	RedisPort string `mapstructure:"REDIS_PORT"`
