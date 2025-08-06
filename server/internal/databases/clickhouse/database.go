@@ -15,25 +15,23 @@ type ClickHouse struct {
 }
 
 func New(username, password, host, port, database string) *ClickHouse {
-	dsn := fmt.Sprintf("clickhouse://%s:%s@%s:%s/%s", username, password, host, port, database)
+	dsn := fmt.Sprintf("tcp://%s:%s@%s:%s?database=%s", username, password, host, port, database)
 
 	db, err := sqlx.Connect("clickhouse", dsn)
 	if err != nil {
-		log.Fatalf("Erro ao conectar no ClickHouse: %v", err)
+		log.Fatalf("Error connecting to ClickHouse: %v", err)
 		return &ClickHouse{}
 	}
 
 	if err := db.Ping(); err != nil {
-		log.Fatalf("Erro ao pingar ClickHouse: %v", err)
+		log.Fatalf("Error pinging ClickHouse: %v", err)
 	}
-
-	slog.Info("Conectado ao ClickHouse")
 
 	return &ClickHouse{db: db}
 }
 
 func (c *ClickHouse) Close() error {
-	slog.Info("Desconectado do ClickHouse")
+	slog.Info("Disconnected from ClickHouse")
 	return c.db.Close()
 }
 

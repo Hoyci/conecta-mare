@@ -17,7 +17,7 @@ func NewHandler(categoriesService CommunitiesService) *communitiesHandler {
 	Once.Do(
 		func() {
 			instance = &communitiesHandler{
-				categoriesService: categoriesService,
+				communitiesService: categoriesService,
 			}
 		},
 	)
@@ -37,7 +37,7 @@ func (h communitiesHandler) RegisterRoutes(r *chi.Mux) {
 func (h communitiesHandler) handleGetCommunities(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	communities, err := h.categoriesService.GetCommunities(ctx)
+	communities, err := h.communitiesService.GetCommunities(ctx)
 	if err != nil {
 		httphelpers.WriteJSON(w, err.Code, err.Err)
 		return

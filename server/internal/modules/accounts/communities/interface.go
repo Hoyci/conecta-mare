@@ -22,6 +22,6 @@ type (
 		logger     *slog.Logger
 	}
 	communitiesHandler struct {
-		categoriesService CommunitiesService
+		communitiesService CommunitiesService
 	}
 )

@@ -1,5 +1,5 @@
 import Navbar from "@/components/layout/Navbar";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
@@ -28,14 +28,8 @@ import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
 import { getSignedUser } from "@/services/user-service";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-
-const profileViews = [
-  { date: "Seg", value: 20 },
-  { date: "Ter", value: 40 },
-  { date: "Qua", value: 80 },
-  { date: "Qui", value: 55 },
-  { date: "Sex", value: 90 },
-];
+import { getUserProfileViews } from "@/services/metrics-service";
+import { tooltipDateFormatter, dateFormatter } from "@/lib/utils";
 
 const services = [
   { name: "Logo Design", views: 150, conversions: 30 },
@@ -58,12 +52,41 @@ const Dashboard = () => {
     queryFn: getSignedUser,
   });
 
+  const { data: userProfileViews = {} } = useQuery({
+    queryKey: ["userProfileViews"],
+    queryFn: getUserProfileViews,
+  });
+
+  const formattedMetrics = useMemo(() => {
+    const value = userProfileViews.metrics?.percentageChange;
+
+    if (value > 0) {
+      return {
+        text: `+${Math.ceil(value)}`,
+        className: "text-green-600",
+      };
+    }
+
+    if (value < 0) {
+      return {
+        text: `${Math.ceil(value)}`,
+        className: "text-red-500",
+      };
+    }
+
+    return {
+      text: "0",
+      className: "text-gray-500",
+    };
+  }, [userProfileViews.metrics?.percentageChange]);
+
   if (!userData.id) {
     return <DashboardSkeleton />;
   }
 
   if (userData.role === "professional" && !userData.subcategoryName) {
     navigate("/onboarding");
+    return null;
   }
 
   return (
@@ -182,7 +205,9 @@ const Dashboard = () => {
                       </select>
                     </div>
                     <ResponsiveContainer width="100%" height={220}>
-                      <LineChart data={profileViews}>
+                      <LineChart
+                        data={userProfileViews.metrics?.currentWeekData}
+                      >
                         <defs>
                           <linearGradient
                             id="colorViews"
@@ -205,7 +230,8 @@ const Dashboard = () => {
                         </defs>
                         <Line
                           type="monotone"
-                          dataKey="value"
+                          dataKey="visits"
+                          name="Contagem de visualizações"
                           stroke="#0070f3"
                           strokeWidth={3}
                           dot={{
@@ -224,6 +250,10 @@ const Dashboard = () => {
                         <CartesianGrid stroke="#eee" vertical={false} />
                         <XAxis
                           dataKey="date"
+                          tickFormatter={(value) => {
+                            const date = new Date(value);
+                            return dateFormatter.format(date);
+                          }}
                           axisLine={false}
                           tickLine={false}
                         />
@@ -234,16 +264,24 @@ const Dashboard = () => {
                             border: "none",
                             boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                           }}
+                          labelFormatter={(label) => {
+                            const date = new Date(label);
+                            return tooltipDateFormatter.format(date);
+                          }}
                         />
                       </LineChart>
                     </ResponsiveContainer>
                     <div className="mt-2 flex items-center justify-between text-sm">
                       <div className="text-gray-500">
                         Total de visualizações:{" "}
-                        <span className="font-bold text-conecta-blue">285</span>
+                        <span className="font-bold text-conecta-blue">
+                          {userProfileViews.metrics?.currentWeekVisits}
+                        </span>
                       </div>
-                      <div className="flex items-center text-green-600 font-medium">
-                        +28%{" "}
+                      <div
+                        className={`flex items-center ${formattedMetrics.className} font-medium`}
+                      >
+                        {formattedMetrics.text}%{" "}
                         <span className="text-gray-500 ml-1 font-normal">
                           vs período anterior
                         </span>

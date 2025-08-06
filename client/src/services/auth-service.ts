@@ -7,7 +7,7 @@ import { toSnakeCase } from "@/lib/utils";
 export const loginUser = async (email: string, password: string) => {
   const apiUrl = `${env.data.VITE_API_URL}/api/v1/users/login`;
 
-  const res = await fetch(apiUrl, {
+  const res = await authFetch(apiUrl, {
     method: "POST",
     body: JSON.stringify({ email, password }),
     headers: {

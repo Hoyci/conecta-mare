@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -9,25 +10,26 @@ import (
 
 type (
 	MetricsRepository interface {
-		UserProfileViews(ctx context.Context, userID string) (any, error)
+		UserProfileViews(ctx context.Context, userID string, startDate, endDate time.Time) (any, error)
 		UserTopPerformingServices(ctx context.Context, userID string) (any, error)
 		UserProfileViewsComparisonBySubcategory(ctx context.Context, userID, subcategoryID string, startDate, endDate time.Time) (any, error)
-		UserProfileViewsComparisonCategory(ctx context.Context, userID, categoryID string, startDate, endDate time.Time) (any, error)
+		UserProfileViewsComparisonByCategory(ctx context.Context, userID, categoryID string, startDate, endDate time.Time) (any, error)
 	}
 
-	// CommunitiesService interface {
-	// 	GetCommunities(ctx context.Context) ([]common.Community, *exceptions.ApiError[string])
-	// }
+	MetricsService interface {
+		GetUserProfileViews(ctx context.Context, userID, startDate, endDate string) (any, error)
+	}
 
 	metricsRepository struct {
 		db *sqlx.DB
 	}
 
-	// communitiesService struct {
-	// 	repository CommunitiesRepository
-	// 	logger     *slog.Logger
-	// }
-	// communitiesHandler struct {
-	// 	categoriesService CommunitiesService
-	// }
+	metricsService struct {
+		repository MetricsRepository
+		logger     *slog.Logger
+	}
+	metricsHandler struct {
+		metricsService MetricsService
+		accessKey      string
+	}
 )

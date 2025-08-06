@@ -8,6 +8,7 @@ import (
 	"conecta-mare-server/internal/modules/accounts/certifications"
 	"conecta-mare-server/internal/modules/accounts/communities"
 	"conecta-mare-server/internal/modules/accounts/locations"
+	"conecta-mare-server/internal/modules/accounts/metrics"
 	"conecta-mare-server/internal/modules/accounts/onboardings"
 	"conecta-mare-server/internal/modules/accounts/projectimages"
 	"conecta-mare-server/internal/modules/accounts/projects"
@@ -114,6 +115,7 @@ func main() {
 	serviceImagesRepo := serviceimages.NewRepository(pg.DB())
 	locationsRepo := locations.NewRepository(pg.DB())
 	communitiesRepo := communities.NewRepository(pg.DB())
+	metricsRepo := metrics.NewRepository(ch.DB())
 
 	sessionsService := session.NewService(sessionsRepo, logger)
 	subcategoriesService := subcategories.NewService(subcategoriesRepo, logger)
@@ -142,6 +144,7 @@ func main() {
 		logger,
 	)
 	communitiesService := communities.NewService(communitiesRepo, logger)
+	metricsService := metrics.NewService(metricsRepo, logger)
 
 	categoriesHandler := categories.NewHandler(categoriesService)
 	categoriesHandler.RegisterRoutes(router)
@@ -154,6 +157,9 @@ func main() {
 
 	communitiesHandler := communities.NewHandler(communitiesService)
 	communitiesHandler.RegisterRoutes(router)
+
+	metricsHandler := metrics.NewHandler(metricsService, cfg.JWTAccessKey)
+	metricsHandler.RegisterRoutes(router)
 
 	done := make(chan bool, 1)
 
